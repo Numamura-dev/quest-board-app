@@ -11,6 +11,7 @@ jobs:
     name: Dependency Vulnerability Scan
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       issues: write
 
     steps:
@@ -30,19 +31,17 @@ jobs:
 
       - name: Run security audit
         id: audit
+        shell: bash
         run: |
           pnpm audit --audit-level=high 2>&1 | tee audit-result.txt
-        continue-on-error: true
-
-      - name: Check audit exit code
-        id: check
-        run: |
-          if grep -qE "vulnerabilities|critical|high" audit-result.txt; then
-            echo "AUDIT_FAILED=true" >> "$GITHUB_ENV"
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "vulnerable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "vulnerable=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create issue on vulnerability found
-        if: env.AUDIT_FAILED == 'true'
+        if: steps.audit.outputs.vulnerable == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

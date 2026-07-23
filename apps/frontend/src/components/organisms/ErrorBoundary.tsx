@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 type Props = {
@@ -36,7 +38,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 						予期しないエラーが発生しました
 					</h2>
 					<p className="text-gray-300 mb-4 text-sm">
-						{this.state.error?.message ?? "不明なエラー"}
+						問題が解決しない場合は管理者にお問い合わせください。
 					</p>
 					<button
 						type="button"

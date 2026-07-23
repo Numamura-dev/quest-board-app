@@ -12,7 +12,7 @@ export default function ErrorPage({ error, reset }: Props) {
 				エラーが発生しました
 			</h2>
 			<p className="text-gray-300 mb-6 text-sm">
-				{error.message ?? "不明なエラー"}
+				問題が解決しない場合は管理者にお問い合わせください。
 			</p>
 			<button
 				type="button"

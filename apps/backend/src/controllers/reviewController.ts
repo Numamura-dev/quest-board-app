@@ -1,88 +1,94 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import {
-  getReviewsByQuestIdService,
-  createReviewService,
-  updateReviewService,
-  deleteReviewService,
-  checkUserReviewExistsService,
+	QuestJoinParamSchema,
+	ReviewCheckParamSchema,
+	ReviewCreateBodySchema,
+	ReviewIdParamSchema,
+	ReviewUpdateBodySchema,
+} from "../schemas/api";
+import {
+	checkUserReviewExistsService,
+	createReviewService,
+	deleteReviewService,
+	getReviewsByQuestIdService,
+	updateReviewService,
 } from "../services/reviewService";
-import { asyncHandler } from "../utils/asyncHandler";
 import { badRequest } from "../utils/appError";
+import { asyncHandler } from "../utils/asyncHandler";
+import { validateRequest } from "../utils/validate";
 
 export const getReviewsByQuestId = asyncHandler(
-  async (req: Request, res: Response) => {
-    const questId = Number(req.params.questId);
-    const reviews = await getReviewsByQuestIdService(questId);
-    res.json(reviews);
-  }
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: QuestJoinParamSchema });
+		const { questId } = params;
+		const reviews = await getReviewsByQuestIdService(questId);
+		res.json(reviews);
+	},
 );
 
-export const createReview = asyncHandler(async (req: Request, res: Response) => {
-  const questId = Number(req.params.questId);
-  const { reviewer_id, rating, comment } = req.body;
+export const createReview = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params, body } = validateRequest(req, {
+			params: QuestJoinParamSchema,
+			body: ReviewCreateBodySchema,
+		});
+		const { questId } = params;
+		const { reviewer_id, rating, comment } = body;
 
-  if (!reviewer_id || !rating) {
-    throw badRequest("reviewer_id and rating are required");
-  }
+		try {
+			const review = await createReviewService({
+				questId,
+				reviewer_id,
+				rating,
+				comment,
+			});
 
-  if (rating < 1 || rating > 5) {
-    throw badRequest("rating must be between 1 and 5");
-  }
+			res.status(201).json(review);
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message.includes("既にレビューを投稿済み")
+			) {
+				throw badRequest(error.message);
+			}
 
-  try {
-    const review = await createReviewService({
-      questId,
-      reviewer_id,
-      rating,
-      comment,
-    });
+			throw error;
+		}
+	},
+);
 
-    res.status(201).json(review);
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("既にレビューを投稿済み")
-    ) {
-      throw badRequest(error.message);
-    }
+export const updateReview = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params, body } = validateRequest(req, {
+			params: ReviewIdParamSchema,
+			body: ReviewUpdateBodySchema,
+		});
+		const { reviewId } = params;
+		const { rating, comment } = body;
 
-    throw error;
-  }
-});
+		const review = await updateReviewService(reviewId, {
+			rating,
+			comment,
+		});
+		res.json(review);
+	},
+);
 
-export const updateReview = asyncHandler(async (req: Request, res: Response) => {
-  const reviewId = Number(req.params.reviewId);
-  const { rating, comment } = req.body;
-
-  if (!rating) {
-    throw badRequest("rating is required");
-  }
-
-  if (rating < 1 || rating > 5) {
-    throw badRequest("rating must be between 1 and 5");
-  }
-
-  const review = await updateReviewService(reviewId, {
-    rating,
-    comment,
-  });
-  res.json(review);
-});
-
-export const deleteReview = asyncHandler(async (req: Request, res: Response) => {
-  const reviewId = Number(req.params.reviewId);
-  await deleteReviewService(reviewId);
-  res.status(204).send();
-});
+export const deleteReview = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: ReviewIdParamSchema });
+		const { reviewId } = params;
+		await deleteReviewService(reviewId);
+		res.status(204).send();
+	},
+);
 
 export const checkUserReviewExists = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { userId, questId } = req.params;
-    const exists = await checkUserReviewExistsService(
-      Number(userId),
-      Number(questId)
-    );
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: ReviewCheckParamSchema });
+		const { userId, questId } = params;
+		const exists = await checkUserReviewExistsService(userId, questId);
 
-    res.json({ exists });
-  }
+		res.json({ exists });
+	},
 );

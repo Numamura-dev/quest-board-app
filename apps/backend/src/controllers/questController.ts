@@ -1,296 +1,250 @@
-import type { QuestStatusValue, QuestTypeValue } from "@quest-board/types";
-import { Request, Response } from "express";
-import {
-  getAllQuestsService,
-  getAllQuestsIncludingDeletedService,
-  getQuestByIdService,
-  getQuestByIdIncludingDeletedService,
-  updateQuestStatusService,
-  createQuestService,
-  updateQuestService,
-  deleteQuestService,
-  restoreQuestService,
-} from "../services/questService";
+import type { Request, Response } from "express";
 import { ROLES } from "../constants/roles";
+import {
+	QuestIdParamSchema,
+	QuestListQuerySchema,
+	QuestMutationBodySchema,
+	QuestStatusBodySchema,
+} from "../schemas/api";
+import {
+	createQuestService,
+	deleteQuestService,
+	getAllQuestsIncludingDeletedService,
+	getAllQuestsService,
+	getQuestByIdIncludingDeletedService,
+	getQuestByIdService,
+	restoreQuestService,
+	updateQuestService,
+	updateQuestStatusService,
+} from "../services/questService";
 import { getUserByFirebaseUidService } from "../services/userService";
-import { asyncHandler } from "../utils/asyncHandler";
 import { badRequest, notFound } from "../utils/appError";
+import { asyncHandler } from "../utils/asyncHandler";
+import { validateRequest } from "../utils/validate";
 
-const QUEST_STATUS_SET = new Set([
-  "active",
-  "in_progress",
-  "inactive",
-  "completed",
-  "draft",
-  "pending",
-]);
-
-const getStatusParam = (status: unknown): QuestStatusValue | undefined =>
-  typeof status === "string" && QUEST_STATUS_SET.has(status)
-    ? (status as QuestStatusValue)
-    : undefined;
-
-interface QuestMutationBody {
-  title?: string;
-  description?: string;
-  type?: QuestTypeValue;
-  status?: QuestStatusValue;
-  maxParticipants?: number;
-  tags?: string[];
-  start_date?: string;
-  end_date?: string;
-  incentive_amount?: number;
-  point_amount?: number;
-  note?: string;
-}
-
-export const getAllQuests = asyncHandler(async (req: Request, res: Response) => {
-  const quests = await getAllQuestsService({
-    keyword: typeof req.query.keyword === "string" ? req.query.keyword : undefined,
-    status: getStatusParam(req.query.status),
-  });
-  res.json(quests);
-});
-
-export const updateQuestStatus = asyncHandler(
-  async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    const { status } = req.body as { status?: string };
-
-    if (!status) {
-      throw badRequest("status is required");
-    }
-
-    if (!QUEST_STATUS_SET.has(status)) {
-      throw badRequest("invalid status");
-    }
-
-    const quest = await updateQuestStatusService(id, status);
-    res.json(quest);
-  }
+export const getAllQuests = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { query } = validateRequest(req, { query: QuestListQuerySchema });
+		const quests = await getAllQuestsService({
+			keyword: query.keyword,
+			status: query.status,
+		});
+		res.json(quests);
+	},
 );
 
-export const getQuestById = asyncHandler(async (req: Request, res: Response) => {
-  const quest = await getQuestByIdService(Number(req.params.id));
-  if (!quest) {
-    throw notFound("Quest not found");
-  }
+export const updateQuestStatus = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params, body } = validateRequest(req, {
+			params: QuestIdParamSchema,
+			body: QuestStatusBodySchema,
+		});
+		const { id } = params;
+		const { status } = body;
 
-  res.json(quest);
-});
+		const quest = await updateQuestStatusService(id, status);
+		res.json(quest);
+	},
+);
+
+export const getQuestById = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: QuestIdParamSchema });
+		const quest = await getQuestByIdService(params.id);
+		if (!quest) {
+			throw notFound("Quest not found");
+		}
+
+		res.json(quest);
+	},
+);
 
 export const createQuest = asyncHandler(async (req: Request, res: Response) => {
-  const {
-    title,
-    description,
-    type,
-    status,
-    maxParticipants,
-    tags = [],
-    start_date,
-    end_date,
-    incentive_amount,
-    point_amount,
-    note,
-  } = req.body as QuestMutationBody;
+	const { body } = validateRequest(req, { body: QuestMutationBodySchema });
+	const {
+		title,
+		description,
+		type,
+		status,
+		maxParticipants,
+		tags = [],
+		start_date,
+		end_date,
+		incentive_amount,
+		point_amount,
+		note,
+	} = body;
 
-  if (
-    !title ||
-    !description ||
-    !type ||
-    !maxParticipants ||
-    !start_date ||
-    !end_date
-  ) {
-    throw badRequest(
-      "title, description, type, maxParticipants, start_date, end_date are required"
-    );
-  }
+	let finalStatus = status || "draft";
 
-  let finalStatus = status || "draft";
+	if (req.user?.uid) {
+		const user = await getUserByFirebaseUidService(req.user.uid);
 
-  if (req.user?.uid) {
-    const user = await getUserByFirebaseUidService(req.user.uid);
+		if (user) {
+			// 一般ユーザー作成分は自動的に承認待ちへ寄せる。
+			if (user.role === ROLES.USER && !status) {
+				finalStatus = "pending";
+			} else if (user.role === ROLES.ADMIN) {
+				finalStatus = status || "draft";
+			}
+		}
+	}
 
-    if (user) {
-      // 一般ユーザー作成分は自動的に承認待ちへ寄せる。
-      if (user.role === ROLES.USER && !status) {
-        finalStatus = "pending";
-      } else if (user.role === ROLES.ADMIN) {
-        finalStatus = status || "draft";
-      }
-    }
-  }
+	const quest = await createQuestService({
+		title,
+		description,
+		type,
+		status: finalStatus,
+		maxParticipants,
+		tags,
+		start_date: new Date(start_date),
+		end_date: new Date(end_date),
+		incentive_amount,
+		point_amount,
+		note,
+	});
 
-  const quest = await createQuestService({
-    title,
-    description,
-    type,
-    status: finalStatus,
-    maxParticipants: Number(maxParticipants),
-    tags,
-    start_date: new Date(start_date),
-    end_date: new Date(end_date),
-    incentive_amount: incentive_amount ? Number(incentive_amount) : 0,
-    point_amount: point_amount ? Number(point_amount) : 0,
-    note: note || "",
-  });
-
-  res.status(201).json(quest);
+	res.status(201).json(quest);
 });
 
 export const updateQuest = asyncHandler(async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const {
-    title,
-    description,
-    type,
-    status,
-    maxParticipants,
-    tags = [],
-    start_date,
-    end_date,
-    incentive_amount,
-    point_amount,
-    note,
-  } = req.body as QuestMutationBody;
+	const { params, body } = validateRequest(req, {
+		params: QuestIdParamSchema,
+		body: QuestMutationBodySchema,
+	});
+	const { id } = params;
+	const {
+		title,
+		description,
+		type,
+		status,
+		maxParticipants,
+		tags = [],
+		start_date,
+		end_date,
+		incentive_amount,
+		point_amount,
+		note,
+	} = body;
 
-  if (Number.isNaN(id)) {
-    throw badRequest("Invalid quest ID");
-  }
+	try {
+		const quest = await updateQuestService(id, {
+			title,
+			description,
+			type,
+			status: status || "draft",
+			maxParticipants,
+			tags,
+			start_date: new Date(start_date),
+			end_date: new Date(end_date),
+			incentive_amount,
+			point_amount,
+			note,
+		});
 
-  if (
-    !title ||
-    !description ||
-    !type ||
-    !maxParticipants ||
-    !start_date ||
-    !end_date
-  ) {
-    throw badRequest(
-      "title, description, type, maxParticipants, start_date, end_date are required"
-    );
-  }
+		res.json(quest);
+	} catch (error) {
+		if (error instanceof Error && error.message === "Quest not found") {
+			throw notFound(error.message);
+		}
 
-  try {
-    const quest = await updateQuestService(id, {
-      title,
-      description,
-      type,
-      status: status || "draft",
-      maxParticipants: Number(maxParticipants),
-      tags,
-      start_date: new Date(start_date),
-      end_date: new Date(end_date),
-      incentive_amount: incentive_amount ? Number(incentive_amount) : 0,
-      point_amount: point_amount ? Number(point_amount) : 0,
-      note: note || "",
-    });
-
-    res.json(quest);
-  } catch (error) {
-    if (error instanceof Error && error.message === "Quest not found") {
-      throw notFound(error.message);
-    }
-
-    throw error;
-  }
+		throw error;
+	}
 });
 
 export const deleteQuest = asyncHandler(async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) {
-    throw badRequest("Invalid quest ID");
-  }
+	const { params } = validateRequest(req, { params: QuestIdParamSchema });
+	const { id } = params;
 
-  try {
-    await deleteQuestService(id);
-    res.status(200).json({ message: "Quest deleted successfully (soft delete)" });
-  } catch (error) {
-    if (error instanceof Error && error.message === "Quest not found") {
-      throw notFound(error.message);
-    }
+	try {
+		await deleteQuestService(id);
+		res
+			.status(200)
+			.json({ message: "Quest deleted successfully (soft delete)" });
+	} catch (error) {
+		if (error instanceof Error && error.message === "Quest not found") {
+			throw notFound(error.message);
+		}
 
-    throw error;
-  }
+		throw error;
+	}
 });
 
 export const getAllQuestsIncludingDeleted = asyncHandler(
-  async (req: Request, res: Response) => {
-    const quests = await getAllQuestsIncludingDeletedService({
-      keyword: typeof req.query.keyword === "string" ? req.query.keyword : undefined,
-      status: getStatusParam(req.query.status),
-    });
-    res.json(quests);
-  }
+	async (req: Request, res: Response) => {
+		const { query } = validateRequest(req, { query: QuestListQuerySchema });
+		const quests = await getAllQuestsIncludingDeletedService({
+			keyword: query.keyword,
+			status: query.status,
+		});
+		res.json(quests);
+	},
 );
 
 export const submitQuestForApproval = asyncHandler(
-  async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id)) {
-      throw badRequest("Invalid quest ID");
-    }
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: QuestIdParamSchema });
+		const { id } = params;
 
-    const quest = await getQuestByIdService(id);
-    if (!quest) {
-      throw notFound("Quest not found");
-    }
+		const quest = await getQuestByIdService(id);
+		if (!quest) {
+			throw notFound("Quest not found");
+		}
 
-    if (quest.status !== "draft" && quest.status !== "inactive") {
-      throw badRequest("Only draft or inactive quests can be submitted for approval");
-    }
+		if (quest.status !== "draft" && quest.status !== "inactive") {
+			throw badRequest(
+				"Only draft or inactive quests can be submitted for approval",
+			);
+		}
 
-    const updatedQuest = await updateQuestStatusService(id, "pending");
-    res.json({
-      message: "Quest submitted for approval successfully",
-      quest: updatedQuest,
-    });
-  }
+		const updatedQuest = await updateQuestStatusService(id, "pending");
+		res.json({
+			message: "Quest submitted for approval successfully",
+			quest: updatedQuest,
+		});
+	},
 );
 
-export const restoreQuest = asyncHandler(async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  if (Number.isNaN(id)) {
-    throw badRequest("Invalid quest ID");
-  }
+export const restoreQuest = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: QuestIdParamSchema });
+		const { id } = params;
 
-  const quest = await getQuestByIdIncludingDeletedService(id);
-  if (!quest) {
-    throw notFound("Quest not found");
-  }
+		const quest = await getQuestByIdIncludingDeletedService(id);
+		if (!quest) {
+			throw notFound("Quest not found");
+		}
 
-  if (!quest.deleted_at) {
-    throw badRequest("Only deleted quests can be restored");
-  }
+		if (!quest.deleted_at) {
+			throw badRequest("Only deleted quests can be restored");
+		}
 
-  const restoredQuest = await restoreQuestService(id);
-  res.json({
-    message: "Quest restored successfully",
-    quest: restoredQuest,
-  });
-});
+		const restoredQuest = await restoreQuestService(id);
+		res.json({
+			message: "Quest restored successfully",
+			quest: restoredQuest,
+		});
+	},
+);
 
 export const reactivateQuest = asyncHandler(
-  async (req: Request, res: Response) => {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id)) {
-      throw badRequest("Invalid quest ID");
-    }
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: QuestIdParamSchema });
+		const { id } = params;
 
-    const quest = await getQuestByIdService(id);
-    if (!quest) {
-      throw notFound("Quest not found");
-    }
+		const quest = await getQuestByIdService(id);
+		if (!quest) {
+			throw notFound("Quest not found");
+		}
 
-    if (quest.status !== "inactive") {
-      throw badRequest("Only inactive quests can be reactivated");
-    }
+		if (quest.status !== "inactive") {
+			throw badRequest("Only inactive quests can be reactivated");
+		}
 
-    const reactivatedQuest = await updateQuestStatusService(id, "active");
-    res.json({
-      message: "Quest reactivated successfully",
-      quest: reactivatedQuest,
-    });
-  }
+		const reactivatedQuest = await updateQuestStatusService(id, "active");
+		res.json({
+			message: "Quest reactivated successfully",
+			quest: reactivatedQuest,
+		});
+	},
 );

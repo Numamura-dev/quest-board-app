@@ -1,55 +1,51 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import {
-  getAllUsersForAdminService,
-  updateUserRoleService,
+	AdminRoleUpdateBodySchema,
+	AdminUserRoleParamSchema,
+} from "../schemas/api";
+import {
+	getAllUsersForAdminService,
+	updateUserRoleService,
 } from "../services/adminUserService";
+import { notFound } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
-import { badRequest, notFound } from "../utils/appError";
+import { validateRequest } from "../utils/validate";
 
 export const getAllUsersForAdmin = asyncHandler(
-  async (_req: Request, res: Response) => {
-    const users = await getAllUsersForAdminService();
-    res.json(users);
-  }
+	async (_req: Request, res: Response) => {
+		const users = await getAllUsersForAdminService();
+		res.json(users);
+	},
 );
 
 export const updateUserRole = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { userId } = req.params;
-    const { role } = req.body;
+	async (req: Request, res: Response) => {
+		const { params, body } = validateRequest(req, {
+			params: AdminUserRoleParamSchema,
+			body: AdminRoleUpdateBodySchema,
+		});
+		const { userId } = params;
+		const { role } = body;
 
-    if (!userId || !role) {
-      throw badRequest("ユーザーIDとロールが必要です");
-    }
+		let updatedUser: Awaited<ReturnType<typeof updateUserRoleService>>;
+		try {
+			updatedUser = await updateUserRoleService(userId, role);
+		} catch (error) {
+			if (error instanceof Error && error.message === "User not found") {
+				throw notFound(error.message);
+			}
 
-    const userIdNumber = Number.parseInt(userId, 10);
-    if (Number.isNaN(userIdNumber)) {
-      throw badRequest("有効なユーザーIDを指定してください");
-    }
+			throw error;
+		}
 
-    let updatedUser;
-    try {
-      updatedUser = await updateUserRoleService(userIdNumber, role);
-    } catch (error) {
-      if (error instanceof Error && error.message === "User not found") {
-        throw notFound(error.message);
-      }
-
-      if (error instanceof Error && error.message.startsWith("Invalid role")) {
-        throw badRequest(error.message);
-      }
-
-      throw error;
-    }
-
-    res.json({
-      message: "ユーザーのロールが正常に更新されました",
-      user: {
-        id: updatedUser.id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-      },
-    });
-  }
+		res.json({
+			message: "ユーザーのロールが正常に更新されました",
+			user: {
+				id: updatedUser.id,
+				name: updatedUser.name,
+				email: updatedUser.email,
+				role: updatedUser.role,
+			},
+		});
+	},
 );

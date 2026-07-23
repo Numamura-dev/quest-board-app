@@ -56,8 +56,8 @@ model Quest {
   @@index([rewards_id], map: "quests_rewards_id_fkey")
   // 一覧取得クエリの最適化: status + deleted_at の複合インデックス (公開ステータス絞り込み)
   @@index([status, deleted_at], map: "quests_status_deleted_at_idx")
-  // 公開日順ソートの最適化: deleted_at + created_at の複合インデックス
-  @@index([deleted_at, created_at], map: "quests_deleted_at_created_at_idx")
+  // 一覧取得の最適化: 未削除クエストを start_date 降順で並べる実クエリに対応
+  @@index([deleted_at, start_date], map: "quests_deleted_at_start_date_idx")
   // 期間絞り込みの最適化: end_date インデックス
   @@index([end_date], map: "quests_end_date_idx")
   @@map("quests")

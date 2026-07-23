@@ -13,14 +13,18 @@ const envCandidates = [
 let loadedFromCandidate = false;
 
 // process.cwd() と backendRoot が同じ解決結果になるケースの重複を除外する。
+// ファイルが存在しても DATABASE_URL が未設定なら次の候補へ進む。
 for (const path of [...new Set(envCandidates)]) {
 	if (!existsSync(path)) {
 		continue;
 	}
 
 	dotenv.config({ path });
-	loadedFromCandidate = true;
-	break;
+
+	if (process.env.DATABASE_URL) {
+		loadedFromCandidate = true;
+		break;
+	}
 }
 
 // .env.local が見つからない場合のみ、従来互換でデフォルトの .env を読む。

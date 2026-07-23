@@ -48,10 +48,15 @@ export const persistQuestSearchHistory = (query: string) => {
 	}
 
 	const nextHistory = buildQuestSearchHistory(readQuestSearchHistory(), query);
-	window.localStorage.setItem(
-		QUEST_SEARCH_HISTORY_KEY,
-		JSON.stringify(nextHistory),
-	);
+
+	try {
+		window.localStorage.setItem(
+			QUEST_SEARCH_HISTORY_KEY,
+			JSON.stringify(nextHistory),
+		);
+	} catch {
+		// プライベートモードや容量超過で setItem が失敗しても検索機能は継続する。
+	}
 
 	return nextHistory;
 };

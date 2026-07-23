@@ -1,5 +1,8 @@
 # Codex Rules
 
+このファイルは Codex / OpenAI エージェント向けのルールファイルです。
+Claude Code を使う場合は CLAUDE.md を参照してください。
+
 ## Commands
 
 詳細は README.md 参照。主要コマンドのみ抜粋:
@@ -32,8 +35,7 @@ pnpm --filter backend seed  # シードデータ投入
 
 ## Editing
 
-- 手動編集は `apply_patch` を使う。
-- 変更は必要最小限にとどめ、 unrelated な修正を混ぜない。
+- 変更は必要最小限にとどめ、unrelated な修正を混ぜない。
 - frontend / backend / docs をまたぐ変更は、なぜまたぐ必要があるかを説明する。
 - デフォルトは ASCII を使い、既存ファイルに合わせる場合のみ例外を認める。
 

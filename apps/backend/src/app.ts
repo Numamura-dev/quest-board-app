@@ -2,9 +2,11 @@ import "./config/firebase"; // Firebase Admin SDK 初期化（副作用import）
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
+import swaggerUi from "swagger-ui-express";
 import { httpLogger, logger } from "./config/logger";
 import { errorHandler } from "./middlewares/errorHandler";
 import { apiRateLimiter } from "./middlewares/rateLimiter";
+import { openApiDocument } from "./openapi/document";
 import adminUsersRouter from "./routes/adminUsers";
 import mypageRouter from "./routes/mypage";
 import questsRouter from "./routes/quests";
@@ -16,6 +18,9 @@ const PORT = process.env.PORT || 3001;
 
 const frontendBaseUrl =
 	process.env.FRONTEND_BASE_URL || "http://localhost:3000";
+
+// reverse proxy / LB 配下で req.ip を正しく解決するために 1 ホップ分を信頼する。
+app.set("trust proxy", 1);
 
 app.use(httpLogger);
 
@@ -41,6 +46,12 @@ app.use(express.json());
 
 // レートリミット（全 API エンドポイントに適用）
 app.use("/api", apiRateLimiter);
+
+app.get("/api/openapi.json", (_req, res) => {
+	res.json(openApiDocument);
+});
+
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 // ルーティング
 app.use("/api/quests", questsRouter);

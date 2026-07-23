@@ -169,13 +169,13 @@ test.describe("Quest API E2E Test", () => {
     expect(activeQuest.status).toBe("active");
   });
 
-  test("PATCH /api/quests/:id/submit で下書きクエストを承認待ちにできる", async () => {
+  test("POST /api/quests/:id/submissions で下書きクエストを承認待ちにできる", async () => {
     const { body } = await createQuest({
       title: `E2E承認-${uniqueSuffix}`,
       status: "draft",
     });
 
-    const response = await apiContext.patch(`/api/quests/${body.id}/submit`);
+    const response = await apiContext.post(`/api/quests/${body.id}/submissions`);
     expect(response.ok()).toBeTruthy();
     const result = await response.json();
     expect(result.quest.status).toBe("pending");
@@ -200,7 +200,7 @@ test.describe("Quest API E2E Test", () => {
     const match = quests.find((quest: any) => quest.id === softDeletedQuestId);
     expect(match).toBeUndefined();
 
-    const adminResponse = await apiContext.get("/api/quests/admin/all");
+    const adminResponse = await apiContext.get("/api/quests?includeDeleted=true");
     expect(adminResponse.ok()).toBeTruthy();
     const adminQuests = await adminResponse.json();
     const deletedQuest = adminQuests.find(
@@ -210,12 +210,12 @@ test.describe("Quest API E2E Test", () => {
     expect(deletedQuest.deleted_at).toBeTruthy();
   });
 
-  test("PATCH /api/quests/:id/restore で論理削除したクエストを復元できる", async () => {
+  test("POST /api/quests/:id/restorations で論理削除したクエストを復元できる", async () => {
     if (!softDeletedQuestId) {
       test.skip(true, "復元対象のクエストがありません");
     }
-    const response = await apiContext.patch(
-      `/api/quests/${softDeletedQuestId}/restore`
+    const response = await apiContext.post(
+      `/api/quests/${softDeletedQuestId}/restorations`
     );
     expect(response.ok()).toBeTruthy();
     const result = await response.json();

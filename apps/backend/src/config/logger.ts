@@ -3,6 +3,9 @@ import pinoHttp from "pino-http";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+/**
+ * アプリケーション共通で利用する Pino ロガー。
+ */
 export const logger = pino({
   level: process.env.LOG_LEVEL ?? (isProduction ? "info" : "debug"),
   base: undefined,
@@ -21,6 +24,9 @@ export const logger = pino({
       },
 });
 
+/**
+ * HTTP リクエスト単位のログ出力を行う Pino middleware。
+ */
 export const httpLogger = pinoHttp({
   logger,
   customLogLevel(_req, res, error) {

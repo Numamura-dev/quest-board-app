@@ -2,5 +2,9 @@ import React from "react";
 import MyPage from "@/components/pages/MyPage";
 
 export default function Page() {
-  return <MyPage />;
+  return (
+    <main id="main-content">
+      <MyPage />
+    </main>
+  );
 }

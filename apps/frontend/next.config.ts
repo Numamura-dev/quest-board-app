@@ -14,12 +14,18 @@ function getApiOrigin(url: string): string {
 }
 
 const apiOrigin = getApiOrigin(apiBaseUrl);
+const isDev = process.env.NODE_ENV !== "production";
+
+// 'unsafe-eval' は HMR のため開発環境のみ許可する。
+// 'unsafe-inline' は Next.js が注入するインラインスクリプト対応のため残しているが、
+// 本番での完全排除は middleware による nonce 付与が必要（別 issue で対応予定）。
+const scriptSrc = isDev
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com"
+  : "script-src 'self' 'unsafe-inline' https://apis.google.com";
 
 const ContentSecurityPolicy = [
   "default-src 'self'",
-  // Next.js requires 'unsafe-inline' for inline styles and scripts in development
-  // In production, Next.js uses nonces or hashes for scripts (handled per-request via middleware for full nonce support)
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com",
+  scriptSrc,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   `connect-src 'self' ${apiOrigin} https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com`,

@@ -14,7 +14,12 @@ const Page: React.FC<QuestPageProps> = ({ params, searchParams }) => {
 
   // id を使って API からクエストデータを取得
   return (
-    <QuestDetailPage questId={id} action={searchParamsData.action as string} />
+    <main id="main-content">
+      <QuestDetailPage
+        questId={id}
+        action={searchParamsData.action as string}
+      />
+    </main>
   );
 };
 

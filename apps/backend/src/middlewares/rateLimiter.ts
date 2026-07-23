@@ -15,6 +15,7 @@ const store = new Map<string, RateLimitEntry>();
 
 /**
  * 期限切れエントリを定期的にクリーンアップ (メモリリーク防止)
+ * .unref() でプロセス終了を妨げず、Jest の open handle 警告も回避する。
  */
 setInterval(() => {
   const now = Date.now();
@@ -23,7 +24,7 @@ setInterval(() => {
       store.delete(key);
     }
   }
-}, 60_000);
+}, 60_000).unref();
 
 export interface RateLimitOptions {
   /** 制限対象の時間ウィンドウ (ミリ秒) */
@@ -51,10 +52,9 @@ export function createRateLimiter(options: RateLimitOptions) {
     res: Response,
     next: NextFunction
   ): void {
-    const ip =
-      (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
-      req.socket.remoteAddress ||
-      "unknown";
+    // req.ip は Express の trust proxy 設定に従い安全に解決される。
+    // 偽装リスクがある x-forwarded-for の直接参照は使用しない。
+    const ip = req.ip ?? req.socket.remoteAddress ?? "unknown";
 
     const now = Date.now();
     const key = `${ip}:${req.path}`;

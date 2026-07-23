@@ -62,4 +62,7 @@ if (!admin.apps.length) {
   }
 }
 
+/**
+ * 初期化済みの Firebase Admin SDK インスタンス。
+ */
 export default admin;

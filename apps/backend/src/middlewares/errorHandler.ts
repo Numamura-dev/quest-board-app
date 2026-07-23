@@ -2,6 +2,9 @@ import { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/appError";
 import { logger } from "../config/logger";
 
+/**
+ * アプリケーション共通の例外を HTTP レスポンスへ変換する。
+ */
 export const errorHandler = (
   error: Error,
   req: Request,

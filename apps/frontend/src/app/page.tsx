@@ -23,7 +23,10 @@ export default function RootPage() {
   }
 
   return (
-    <main className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900">
+    <main
+      id="main-content"
+      className="flex justify-center items-center min-h-screen bg-gradient-to-b from-gray-800 to-gray-900"
+    >
       {/* ログインしている場合 */}
       {isLoggedIn ? (
         /* クエスト一覧表示 */

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import Button from "../atoms/Button";
 import { Sword, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import QuestCard from "../molecules/QuestCard";
-import type { Quest as FullQuest } from "@quest-board/types";
+import { QuestDifficulty, type Quest as FullQuest } from "@quest-board/types";
 
 // 表示用の簡易クエスト型（QuestCardが想定する形に合わせる）
 type DisplayQuest = {
@@ -26,6 +26,20 @@ type QuestData = {
 
 type QuestHistoryProps = {
   questData: QuestData;
+};
+
+const getDisplayDifficulty = (
+  difficulty?: FullQuest["difficulty"]
+): DisplayQuest["difficulty"] => {
+  switch (difficulty) {
+    case QuestDifficulty.Intermediate:
+      return "中級";
+    case QuestDifficulty.Advanced:
+      return "上級";
+    case QuestDifficulty.Beginner:
+    default:
+      return "初級";
+  }
 };
 
 // タブ切り替え付きクエスト一覧
@@ -72,7 +86,7 @@ const QuestHistory: React.FC<QuestHistoryProps> = ({ questData }) => {
               title: quest.title,
               reward: Number(quest.rewards?.incentive_amount ?? 0),
               deadline: quest.end_date,
-              difficulty: (quest.difficulty as any) || "初級",
+              difficulty: getDisplayDifficulty(quest.difficulty),
               category: String(quest.type || ""),
               status: String(quest.status || ""),
             };

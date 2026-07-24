@@ -21,29 +21,49 @@ export interface UpdateUserData {
   firebase_uid?: string;
 }
 
+/**
+ * ユーザーテーブルと関連データへのアクセスを提供する。
+ */
 export class UserDataAccessor {
-  // IDでユーザー取得
+  /**
+   * ユーザー ID から 1 件取得する。
+   * @param id - 対象ユーザー ID
+   * @returns ユーザー情報。見つからない場合は `null`
+   */
   async findById(id: number): Promise<User | null> {
     return await prisma.user.findUnique({
       where: { id },
     });
   }
 
-  // メールアドレスでユーザー取得
+  /**
+   * メールアドレスでユーザーを取得する。
+   * @param email - 検索対象のメールアドレス
+   * @returns ユーザー情報。見つからない場合は `null`
+   */
   async findByEmail(email: string): Promise<User | null> {
     return await prisma.user.findUnique({
       where: { email },
     });
   }
 
-  // 名前でユーザー取得
+  /**
+   * 名前でユーザーを取得する。
+   * @param name - 検索対象の名前
+   * @returns ユーザー情報。見つからない場合は `null`
+   */
   async findByName(name: string): Promise<User | null> {
     return await prisma.user.findFirst({
       where: { name },
     });
   }
 
-  // 名前またはメールアドレスでユーザー取得
+  /**
+   * 名前またはメールアドレスでユーザーを取得する。
+   * @param name - 検索対象の名前
+   * @param email - 検索対象のメールアドレス
+   * @returns ユーザー情報。見つからない場合は `null`
+   */
   async findByNameOrEmail(name: string, email: string): Promise<User | null> {
     return await prisma.user.findFirst({
       where: {
@@ -52,14 +72,23 @@ export class UserDataAccessor {
     });
   }
 
-  // ユーザー作成
+  /**
+   * ユーザーを新規作成する。
+   * @param data - 作成するユーザー情報
+   * @returns 作成後のユーザー情報
+   */
   async create(data: CreateUserData): Promise<User> {
     return await prisma.user.create({
       data,
     });
   }
 
-  // ユーザー更新
+  /**
+   * 既存ユーザーを更新する。
+   * @param id - 更新対象のユーザー ID
+   * @param data - 更新内容
+   * @returns 更新後のユーザー情報
+   */
   async update(id: number, data: UpdateUserData): Promise<User> {
     return await prisma.user.update({
       where: { id },
@@ -67,43 +96,63 @@ export class UserDataAccessor {
     });
   }
 
-  // Firebase UIDでユーザー取得
+  /**
+   * Firebase UID からユーザーを取得する。
+   * @param firebaseUid - Firebase Authentication の UID
+   * @returns ユーザー情報。見つからない場合は `null`
+   */
   async findByFirebaseUid(firebaseUid: string): Promise<User | null> {
     return await prisma.user.findUnique({
       where: { firebase_uid: firebaseUid } as any,
     });
   }
 
-    // 全ユーザー取得（管理者用）
-async getAllForAdmin() {
-  return await prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      created_at: true,
-    },
-    orderBy: {
-      created_at: "desc",
-    },
-  });
-}
+  /**
+   * 管理画面向けのユーザー一覧を取得する。
+   * @returns 管理画面用に絞り込んだユーザー一覧
+   */
+  async getAllForAdmin() {
+    return await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        created_at: true,
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+  }
 
-  // ユーザー削除
+  /**
+   * ユーザーを削除する。
+   * @param id - 削除対象のユーザー ID
+   * @returns 削除後のユーザー情報
+   */
   async delete(id: number): Promise<User> {
     return await prisma.user.delete({
       where: { id },
     });
   }
 
-  // Firebase UIDでユーザー削除
+  /**
+   * Firebase UID からユーザーを削除する。
+   * @param firebaseUid - 対象 Firebase UID
+   * @returns 削除後のユーザー情報
+   */
   async deleteByFirebaseUid(firebaseUid: string): Promise<User> {
     return await prisma.user.delete({
       where: { firebase_uid: firebaseUid } as any,
     });
   }
 
-  // ユーザーの関連データを確認
+  /**
+   * ユーザーに紐づく関連データ件数を集計する。
+   * @param userId - 対象ユーザー ID
+   * @returns 関連テーブルごとの件数
+   */
   async findRelatedData(userId: number) {
     const [
       clearSubmissions,
@@ -140,7 +189,11 @@ async getAllForAdmin() {
     };
   }
 
-  // ユーザーの関連データを削除（外部キー制約の順序で削除）
+  /**
+   * ユーザーに紐づく関連データを外部キー制約順に削除する。
+   * @param userId - 対象ユーザー ID
+   * @returns 削除完了後の Promise
+   */
   async deleteRelatedData(userId: number) {
     // 外部キー制約の順序で削除（子テーブルから親テーブルへ）
     await prisma.clearSubmission.deleteMany({ where: { user_id: userId } });

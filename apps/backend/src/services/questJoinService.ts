@@ -1,6 +1,13 @@
 import { prisma } from "../config/db";
 import { logger } from "../config/logger";
 
+/**
+ * クエスト参加登録を行う。
+ * 同時参加を考慮し、対象クエストをロックしたうえで重複参加と定員超過を検証する。
+ * @param userId - 参加するユーザー ID
+ * @param questId - 参加対象のクエスト ID
+ * @returns 登録結果。失敗時は理由コードを返す
+ */
 export const addUserToQuest = async (userId: number, questId: number) => {
   try {
     // トランザクション開始

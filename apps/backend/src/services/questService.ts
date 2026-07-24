@@ -7,7 +7,11 @@ interface GetAllQuestsParams {
 
 const questDataAccessor = new QuestDataAccessor();
 
-// 全クエスト取得（オプションでキーワード・ステータスで絞り込み）
+/**
+ * 公開中クエストを検索条件付きで取得する。
+ * @param params - 一覧取得時の絞り込み条件
+ * @returns 条件に一致したクエスト一覧
+ */
 export const getAllQuestsService = async ({
   keyword,
   status,
@@ -16,7 +20,11 @@ export const getAllQuestsService = async ({
   return quests;
 };
 
-// 全クエスト取得（削除済みも含む）- 管理者用
+/**
+ * 管理者向けに削除済みを含むクエスト一覧を取得する。
+ * @param params - 一覧取得時の絞り込み条件
+ * @returns 条件に一致したクエスト一覧
+ */
 export const getAllQuestsIncludingDeletedService = async ({
   keyword,
   status,
@@ -28,25 +36,42 @@ export const getAllQuestsIncludingDeletedService = async ({
   return quests;
 };
 
-// IDでクエスト取得
+/**
+ * クエスト ID から 1 件取得する。
+ * @param id - 取得対象のクエスト ID
+ * @returns クエスト情報。見つからない場合は `null`
+ */
 export const getQuestByIdService = async (id: number) => {
   const quest = await questDataAccessor.findById(id);
   return quest;
 };
 
-// IDでクエスト取得（削除済みも含む）
+/**
+ * 削除済みを含めてクエスト ID から 1 件取得する。
+ * @param id - 取得対象のクエスト ID
+ * @returns クエスト情報。見つからない場合は `null`
+ */
 export const getQuestByIdIncludingDeletedService = async (id: number) => {
   const quest = await questDataAccessor.findByIdIncludingDeleted(id);
   return quest;
 };
 
-// ステータス更新
+/**
+ * クエストのステータスを更新する。
+ * @param id - 更新対象のクエスト ID
+ * @param status - 更新後のステータス
+ * @returns 更新後のクエスト情報
+ */
 export const updateQuestStatusService = async (id: number, status: string) => {
   const quest = await questDataAccessor.updateStatus(id, status);
   return quest;
 };
 
-// クエスト作成
+/**
+ * クエストと関連報酬を新規作成する。
+ * @param questData - 作成対象のクエスト入力値
+ * @returns 作成後のクエスト情報
+ */
 export const createQuestService = async (questData: {
   title: string;
   description: string;
@@ -80,7 +105,12 @@ export const createQuestService = async (questData: {
   return quest;
 };
 
-// クエスト編集
+/**
+ * 既存クエストと関連報酬を更新する。
+ * @param id - 更新対象のクエスト ID
+ * @param questData - 更新後のクエスト入力値
+ * @returns 更新後のクエスト情報
+ */
 export const updateQuestService = async (
   id: number,
   questData: {
@@ -117,13 +147,21 @@ export const updateQuestService = async (
   return quest;
 };
 
-// クエスト削除
+/**
+ * クエストを論理削除する。
+ * @param id - 削除対象のクエスト ID
+ * @returns 削除後のクエスト情報
+ */
 export const deleteQuestService = async (id: number) => {
   const quest = await questDataAccessor.delete(id);
   return quest;
 };
 
-// クエスト復元
+/**
+ * 論理削除済みクエストを復元する。
+ * @param id - 復元対象のクエスト ID
+ * @returns 復元後のクエスト情報
+ */
 export const restoreQuestService = async (id: number) => {
   const quest = await questDataAccessor.restore(id);
   return quest;

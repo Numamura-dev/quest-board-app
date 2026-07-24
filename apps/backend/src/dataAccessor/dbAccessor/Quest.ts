@@ -56,6 +56,9 @@ export interface QuestWhereCondition {
   deleted_at?: Date | null;
 }
 
+/**
+ * クエストテーブルと関連データへのアクセスを提供する。
+ */
 export class QuestDataAccessor {
   /**
    * 全クエスト取得（オプションでキーワード・ステータスで絞り込み）

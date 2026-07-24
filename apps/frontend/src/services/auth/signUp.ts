@@ -43,7 +43,7 @@ export const signUp = async (name: string, email: string, password: string) => {
         const idToken = await getIdToken();
         const apiUrl = `${
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"
-        }/api/users/create`;
+        }/api/users`;
 
         const response = await fetch(apiUrl, {
           method: "POST",

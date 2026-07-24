@@ -1,4 +1,4 @@
-import { apiClient } from "./httpClient";
+import { apiClient, authenticatedApiClient } from "./httpClient";
 
 export interface ReviewResponse {
   id: number;
@@ -14,7 +14,6 @@ export interface ReviewResponse {
 }
 
 export interface CreateReviewRequest {
-  reviewer_id: number;
   rating: number;
   comment?: string;
 }
@@ -42,7 +41,7 @@ export const reviewService = {
     questId: string,
     data: CreateReviewRequest
   ): Promise<ReviewResponse> => {
-    return apiClient.post<ReviewResponse, CreateReviewRequest>(
+    return authenticatedApiClient.post<ReviewResponse, CreateReviewRequest>(
       `/quests/${questId}/reviews`,
       data
     );
@@ -55,7 +54,7 @@ export const reviewService = {
     reviewId: string,
     data: UpdateReviewRequest
   ): Promise<ReviewResponse> => {
-    return apiClient.put<ReviewResponse, UpdateReviewRequest>(
+    return authenticatedApiClient.put<ReviewResponse, UpdateReviewRequest>(
       `/reviews/${reviewId}`,
       data
     );
@@ -65,7 +64,7 @@ export const reviewService = {
    * レビューを削除
    */
   deleteReview: async (reviewId: string): Promise<void> => {
-    return apiClient.delete<void>(`/reviews/${reviewId}`);
+    return authenticatedApiClient.delete<void>(`/reviews/${reviewId}`);
   },
 
   /**

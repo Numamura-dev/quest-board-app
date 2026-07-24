@@ -1,25 +1,25 @@
 import express from "express";
 import {
-  getAllQuests,
-  getQuestById,
-  updateQuestStatus,
-  createQuest,
-  updateQuest,
-  deleteQuest,
-  reactivateQuest,
-  submitQuestForApproval,
-  restoreQuest,
+	createQuest,
+	deleteQuest,
+	getAllQuests,
+	getQuestById,
+	reactivateQuest,
+	restoreQuest,
+	submitQuestForApproval,
+	updateQuest,
+	updateQuestStatus,
 } from "../controllers/questController";
 import { joinQuest } from "../controllers/questJoinController";
 import {
-  authMiddleware,
-  optionalAuthMiddleware,
-  requireAdmin,
-} from "../middlewares/auth.middleware";
-import {
-  createReview,
-  getReviewsByQuestId,
+	createReview,
+	getReviewsByQuestId,
 } from "../controllers/reviewController";
+import {
+	authMiddleware,
+	optionalAuthMiddleware,
+	requireAdmin,
+} from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
@@ -33,7 +33,7 @@ router.post("/:id/restorations", authMiddleware, requireAdmin, restoreQuest); //
 router.post("/:id/activations", authMiddleware, requireAdmin, reactivateQuest); // POST /quests/:id/activations
 router.delete("/:id", authMiddleware, requireAdmin, deleteQuest); // DELETE /quests/:id (論理削除)
 router.get("/:questId/reviews", getReviewsByQuestId); // GET /quests/:questId/reviews
-router.post("/:questId/reviews", createReview); // POST /quests/:questId/reviews
+router.post("/:questId/reviews", authMiddleware, createReview); // POST /quests/:questId/reviews
 router.post("/:questId/participants", authMiddleware, joinQuest); // POST /quests/:questId/participants
 
 export default router;

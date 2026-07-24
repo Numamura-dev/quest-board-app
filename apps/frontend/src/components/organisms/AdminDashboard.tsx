@@ -1,5 +1,9 @@
 "use client";
 
+import {
+	getQuestStatusBadgeClass,
+	getQuestStatusLabel,
+} from "@/constants/questPresentation";
 import { useAuth } from "@/hooks/useAuth";
 import type { Quest } from "@quest-board/types";
 import {
@@ -120,25 +124,6 @@ const AdminDashboard = () => {
 		),
 	};
 
-	const getStatusColor = (status: string): string => {
-		switch (status) {
-			case "pending":
-				return "bg-yellow-500";
-			case "active":
-				return "bg-blue-500";
-			case "completed":
-				return "bg-green-500";
-			case "draft":
-				return "bg-gray-500";
-			case "in_progress":
-				return "bg-purple-500";
-			case "inactive":
-				return "bg-gray-400";
-			default:
-				return "bg-gray-500";
-		}
-	};
-
 	const getPriorityColor = (priority: QuestPriority): string => {
 		switch (priority) {
 			case "critical":
@@ -151,25 +136,6 @@ const AdminDashboard = () => {
 				return "text-green-600";
 			default:
 				return "text-gray-600";
-		}
-	};
-
-	const getStatusText = (status: string): string => {
-		switch (status) {
-			case "pending":
-				return "承認待ち";
-			case "active":
-				return "公開中";
-			case "completed":
-				return "完了";
-			case "draft":
-				return "下書き";
-			case "in_progress":
-				return "進行中";
-			case "inactive":
-				return "停止中";
-			default:
-				return status;
 		}
 	};
 
@@ -361,11 +327,11 @@ const AdminDashboard = () => {
 					<div className="flex items-center gap-3">
 						<h3 className="font-semibold text-slate-800">{quest.title}</h3>
 						<span
-							className={`px-2 py-1 rounded-full text-xs text-white ${getStatusColor(
+							className={`px-2 py-1 rounded-full text-xs text-white ${getQuestStatusBadgeClass(
 								quest.status,
 							)}`}
 						>
-							{getStatusText(quest.status)}
+							{getQuestStatusLabel(quest.status)}
 						</span>
 						{quest.deleted_at && (
 							<span className="px-2 py-1 rounded-full text-xs text-white bg-red-500">
@@ -648,11 +614,11 @@ const AdminDashboard = () => {
 					<div className="text-sm">
 						<span className="font-medium text-slate-800">ステータス: </span>
 						<span
-							className={`px-2 py-1 rounded-full text-xs text-white ${getStatusColor(
+							className={`px-2 py-1 rounded-full text-xs text-white ${getQuestStatusBadgeClass(
 								quest.status,
 							)}`}
 						>
-							{getStatusText(quest.status)}
+							{getQuestStatusLabel(quest.status)}
 						</span>
 					</div>
 					<div className="text-sm">

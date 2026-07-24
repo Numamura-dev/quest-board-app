@@ -31,6 +31,7 @@ export const getAllQuests = asyncHandler(
 		const filters = {
 			keyword: query.keyword,
 			status: query.status,
+			participantUserId: query.participantUserId,
 		};
 
 		if (query.includeDeleted) {

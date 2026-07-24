@@ -113,6 +113,7 @@ export const QuestListQuerySchema = z
 			.enum(QUEST_STATUS_VALUES as [QuestStatusValue, ...QuestStatusValue[]])
 			.optional(),
 		includeDeleted: z.coerce.boolean().optional(),
+		participantUserId: z.coerce.number().int().positive().optional(),
 	})
 	.openapi("QuestListQuery");
 
@@ -228,7 +229,6 @@ export const ReviewSchema = z
 
 export const ReviewCreateBodySchema = z
 	.object({
-		reviewer_id: z.coerce.number().int().positive(),
 		rating: z.coerce.number().int().min(1).max(5),
 		comment: z.string().optional(),
 	})
@@ -252,3 +252,24 @@ export const AdminRoleUpdateBodySchema = z
 		role: z.enum(VALID_ROLES),
 	})
 	.openapi("AdminRoleUpdateBody");
+
+export const TagListResponseSchema = z
+	.object({
+		tags: z.array(z.string()),
+	})
+	.openapi("TagListResponse");
+
+export const UnusedTagListResponseSchema = z
+	.object({
+		tags: z.array(z.string()),
+		count: z.number().int(),
+	})
+	.openapi("UnusedTagListResponse");
+
+export const TagCleanupResponseSchema = z
+	.object({
+		message: z.string(),
+		cleanedQuestCount: z.number().int(),
+		removedTags: z.array(z.string()),
+	})
+	.openapi("TagCleanupResponse");

@@ -10,6 +10,7 @@ import adminUsersRouter from "./routes/adminUsers";
 import mypageRouter from "./routes/mypage";
 import questsRouter from "./routes/quests";
 import reviewsRouter from "./routes/reviews";
+import tagsRouter from "./routes/tags";
 import usersRouter from "./routes/users";
 
 const app = express();
@@ -58,6 +59,7 @@ app.use("/api/reviews", reviewsRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/mypage", mypageRouter);
 app.use("/api/admin/users", adminUsersRouter);
+app.use("/api/tags", tagsRouter);
 app.use(errorHandler);
 
 // サーバー起動

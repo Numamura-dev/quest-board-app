@@ -54,6 +54,13 @@ model Quest {
   reviews            Review[]
 
   @@index([rewards_id], map: "quests_rewards_id_fkey")
+  // クエスト一覧取得クエリの最適化用複合インデックス
+  // findAll: WHERE deleted_at IS NULL ORDER BY start_date DESC
+  @@index([deleted_at, start_date], map: "quests_deleted_at_start_date_idx")
+  // findAll (status 絞り込み時): WHERE deleted_at IS NULL AND status = ? ORDER BY start_date DESC
+  @@index([deleted_at, status, start_date], map: "quests_deleted_at_status_start_date_idx")
+  // findAllIncludingDeleted (管理者用): WHERE status = ? ORDER BY start_date DESC
+  @@index([status, start_date], map: "quests_status_start_date_idx")
   @@map("quests")
 }
 

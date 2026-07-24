@@ -43,22 +43,19 @@ const SearchHistoryDropdown: React.FC<SearchHistoryDropdownProps> = ({
           <X className="w-3 h-3" />
         </button>
       </div>
-      <ul>
-        {history.map((keyword, index) => (
-          <li key={index}>
-            <button
-              type="button"
-              role="option"
-              aria-selected={false}
-              onClick={() => onSelect(keyword)}
-              className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-2"
-            >
-              <History className="w-3 h-3 text-gray-500 flex-shrink-0" />
-              <span className="truncate">{keyword}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {history.map((keyword) => (
+        <button
+          key={keyword}
+          type="button"
+          role="option"
+          aria-selected={false}
+          onClick={() => onSelect(keyword)}
+          className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-2"
+        >
+          <History className="w-3 h-3 text-gray-500 flex-shrink-0" />
+          <span className="truncate">{keyword}</span>
+        </button>
+      ))}
     </div>
   );
 };

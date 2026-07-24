@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * 検索履歴を localStorage に保存・取得するカスタムフック
  *

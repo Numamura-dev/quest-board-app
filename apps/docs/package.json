@@ -1,11 +1,13 @@
 {
-  "devDependencies": {
-    "vitepress": "^1.6.4",
-    "vitepress-plugin-search": "1.0.4-alpha.22"
-  },
-  "scripts": {
-    "dev:docs": "vitepress dev",
-    "build": "vitepress build",
-    "preview": "vitepress preview"
-  }
+	"name": "docs",
+	"private": true,
+	"devDependencies": {
+		"vitepress": "^1.6.4",
+		"vitepress-plugin-search": "1.0.4-alpha.22"
+	},
+	"scripts": {
+		"dev:docs": "vitepress dev",
+		"build": "vitepress build",
+		"preview": "vitepress preview"
+	}
 }

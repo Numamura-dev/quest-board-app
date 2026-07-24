@@ -113,6 +113,7 @@ export const QuestListQuerySchema = z
 			.enum(QUEST_STATUS_VALUES as [QuestStatusValue, ...QuestStatusValue[]])
 			.optional(),
 		includeDeleted: z.coerce.boolean().optional(),
+		participantUserId: z.coerce.number().int().positive().optional(),
 	})
 	.openapi("QuestListQuery");
 

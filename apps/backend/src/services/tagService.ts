@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "../config/db";
 import { logger } from "../config/logger";
 
@@ -105,7 +106,7 @@ export async function cleanupUnusedTagsService(): Promise<{
   const deletedQuestsWithTags = await prisma.quest.findMany({
     where: {
       deleted_at: { not: null },
-      NOT: { tags: null },
+      NOT: [{ tags: Prisma.DbNull }],
     },
     select: { id: true, tags: true },
   });

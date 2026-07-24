@@ -252,3 +252,24 @@ export const AdminRoleUpdateBodySchema = z
 		role: z.enum(VALID_ROLES),
 	})
 	.openapi("AdminRoleUpdateBody");
+
+export const TagListResponseSchema = z
+	.object({
+		tags: z.array(z.string()),
+	})
+	.openapi("TagListResponse");
+
+export const UnusedTagListResponseSchema = z
+	.object({
+		tags: z.array(z.string()),
+		count: z.number().int(),
+	})
+	.openapi("UnusedTagListResponse");
+
+export const TagCleanupResponseSchema = z
+	.object({
+		message: z.string(),
+		cleanedQuestCount: z.number().int(),
+		removedTags: z.array(z.string()),
+	})
+	.openapi("TagCleanupResponse");

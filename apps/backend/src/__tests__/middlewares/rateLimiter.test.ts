@@ -18,7 +18,7 @@ function mockResponse(): Response & {
   const headers: Record<string, unknown> = {};
   const res = {
     _status: 200,
-    _json: null,
+    _json: null as unknown,
     _headers: headers,
     setHeader(key: string, value: unknown) {
       headers[key] = value;
@@ -108,12 +108,12 @@ describe("createRateLimiter", () => {
       headers: { "x-forwarded-for": "203.0.113.1, 10.0.0.1" },
       socket: { remoteAddress: "10.0.0.1" },
       path: "/api/quests",
-    } as Partial<Request>);
+    } as unknown as Partial<Request>);
     const req2 = mockRequest({
       headers: { "x-forwarded-for": "203.0.113.2, 10.0.0.1" },
       socket: { remoteAddress: "10.0.0.1" },
       path: "/api/quests",
-    } as Partial<Request>);
+    } as unknown as Partial<Request>);
     const res1 = mockResponse();
     const res2 = mockResponse();
     const next = jest.fn();

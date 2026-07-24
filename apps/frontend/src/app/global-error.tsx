@@ -5,20 +5,55 @@ type Props = {
 	reset: () => void;
 };
 
-export default function GlobalError({ error, reset }: Props) {
+// global-error.tsx はルートレイアウトをバイパスするため globals.css が読み込まれない。
+// Tailwind クラスは効かないのでインラインスタイルで記述する。
+export default function GlobalError({ error: _error, reset }: Props) {
 	return (
 		<html lang="ja">
-			<body className="min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 flex flex-col items-center justify-center p-8 text-center">
-				<h2 className="text-2xl font-semibold text-red-400 mb-2">
+			<body
+				style={{
+					minHeight: "100vh",
+					background: "linear-gradient(to bottom, #1f2937, #111827)",
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					justifyContent: "center",
+					padding: "2rem",
+					textAlign: "center",
+					margin: 0,
+				}}
+			>
+				<h2
+					style={{
+						fontSize: "1.5rem",
+						fontWeight: 600,
+						color: "#f87171",
+						marginBottom: "0.5rem",
+					}}
+				>
 					致命的なエラーが発生しました
 				</h2>
-				<p className="text-gray-300 mb-6 text-sm">
+				<p
+					style={{
+						color: "#d1d5db",
+						marginBottom: "1.5rem",
+						fontSize: "0.875rem",
+					}}
+				>
 					問題が解決しない場合は管理者にお問い合わせください。
 				</p>
 				<button
 					type="button"
 					onClick={reset}
-					className="px-6 py-3 rounded-lg font-semibold transition-all duration-200 border-2 bg-gradient-to-b from-stone-200 to-stone-300 text-stone-700 border-stone-400 hover:from-stone-300 hover:to-stone-400"
+					style={{
+						padding: "0.75rem 1.5rem",
+						borderRadius: "0.5rem",
+						fontWeight: 600,
+						border: "2px solid #a8a29e",
+						background: "linear-gradient(to bottom, #e7e5e4, #d6d3d1)",
+						color: "#44403c",
+						cursor: "pointer",
+					}}
 				>
 					再試行
 				</button>

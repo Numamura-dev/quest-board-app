@@ -110,15 +110,11 @@ const QuestList: React.FC = () => {
 
   useEffect(() => {
     const timerId = window.setTimeout(() => {
-      const trimmed = searchQuery.trim();
-      setDebouncedSearchQuery(trimmed);
-      if (trimmed) {
-        addHistory(trimmed);
-      }
+      setDebouncedSearchQuery(searchQuery.trim());
     }, 200);
 
     return () => window.clearTimeout(timerId);
-  }, [searchQuery, addHistory]);
+  }, [searchQuery]);
 
   // ユーザーIDを動的に取得
   useEffect(() => {
@@ -322,6 +318,20 @@ const QuestList: React.FC = () => {
                   value={searchQuery}
                   onFocus={() => setShowSuggestions(true)}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const trimmed = searchQuery.trim();
+                      if (trimmed) addHistory(trimmed);
+                      setShowSuggestions(false);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const trimmed = searchQuery.trim();
+                    // フォーカスが検索コンテナ外に移動したときのみ履歴保存
+                    if (trimmed && !searchContainerRef.current?.contains(e.relatedTarget as Node)) {
+                      addHistory(trimmed);
+                    }
+                  }}
                   className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                 />
 

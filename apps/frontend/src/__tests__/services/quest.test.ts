@@ -113,9 +113,29 @@ describe("questService", () => {
 			await questService.getAllQuestsIncludingDeleted();
 
 			expect(authenticatedApiClient.get).toHaveBeenCalledWith(
-				"/quests/admin/all",
-				undefined,
+				"/quests",
+				{ includeDeleted: true },
 			);
+		});
+	});
+
+	describe("reactivateQuest", () => {
+		it("再公開エンドポイントを POST で呼ぶ", async () => {
+			vi.mocked(authenticatedApiClient.post).mockResolvedValueOnce({
+				message: "reactivated",
+				quest: mockQuest,
+			});
+
+			const result = await questService.reactivateQuest("1");
+
+			expect(authenticatedApiClient.post).toHaveBeenCalledWith(
+				"/quests/1/activations",
+				{},
+			);
+			expect(result).toEqual({
+				message: "reactivated",
+				quest: mockQuest,
+			});
 		});
 	});
 });

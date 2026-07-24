@@ -17,7 +17,7 @@ test.describe.serial("レビューAPI E2Eテスト", () => {
     }
     questId = quests[0].id;
 
-    const usersResponse = await request.get(`${API_BASE}/users/all`);
+    const usersResponse = await request.get(`${API_BASE}/users`);
     const users = await usersResponse.json();
     if (!Array.isArray(users) || users.length === 0) {
       throw new Error("テスト用のユーザーが見つかりません。seedデータを実行してください。");
@@ -28,14 +28,14 @@ test.describe.serial("レビューAPI E2Eテスト", () => {
     // まず既存のレビューを確認して削除
     try {
       const checkResponse = await request.get(
-        `${API_BASE}/reviews/check/${userId}/${questId}`
+        `${API_BASE}/users/${userId}/reviews?questId=${questId}`
       );
       if (checkResponse.ok()) {
         const checkBody = await checkResponse.json();
         if (checkBody.exists) {
           // 既存のレビューIDを取得するためにレビュー一覧を取得
           const reviewsResponse = await request.get(
-            `${API_BASE}/reviews/quest/${questId}`
+            `${API_BASE}/quests/${questId}/reviews`
           );
           if (reviewsResponse.ok()) {
             const reviews = await reviewsResponse.json();
@@ -54,10 +54,10 @@ test.describe.serial("レビューAPI E2Eテスト", () => {
   });
 
   // レビュー作成
-  test("POST /reviews/quest/:questId — 新規レビュー作成できる", async ({
+  test("POST /quests/:questId/reviews — 新規レビュー作成できる", async ({
     request,
   }) => {
-    const response = await request.post(`${API_BASE}/reviews/quest/${questId}`, {
+    const response = await request.post(`${API_BASE}/quests/${questId}/reviews`, {
       data: {
         reviewer_id: userId,
         rating: 4,
@@ -83,10 +83,10 @@ test.describe.serial("レビューAPI E2Eテスト", () => {
   });
 
   // 重複投稿制限
-  test("POST /reviews/quest/:questId — 同一ユーザーは重複投稿できない", async ({
+  test("POST /quests/:questId/reviews — 同一ユーザーは重複投稿できない", async ({
     request,
   }) => {
-    const response = await request.post(`${API_BASE}/reviews/quest/${questId}`, {
+    const response = await request.post(`${API_BASE}/quests/${questId}/reviews`, {
       data: {
         reviewer_id: userId,
         rating: 5,
@@ -100,10 +100,10 @@ test.describe.serial("レビューAPI E2Eテスト", () => {
   });
 
   // レビュー一覧取得
-  test("GET /reviews/quest/:questId — クエストのレビュー一覧を取得できる", async ({
+  test("GET /quests/:questId/reviews — クエストのレビュー一覧を取得できる", async ({
     request,
   }) => {
-    const response = await request.get(`${API_BASE}/reviews/quest/${questId}`);
+    const response = await request.get(`${API_BASE}/quests/${questId}/reviews`);
     expect(response.status()).toBe(200);
 
     const reviews = await response.json();
@@ -133,11 +133,11 @@ test.describe.serial("レビューAPI E2Eテスト", () => {
   });
 
   // 投稿済み確認
-  test("GET /reviews/check/:userId/:questId — 投稿済みか確認できる", async ({
+  test("GET /users/:userId/reviews?questId=:questId — 投稿済みか確認できる", async ({
     request,
   }) => {
     const response = await request.get(
-      `${API_BASE}/reviews/check/${userId}/${questId}`
+      `${API_BASE}/users/${userId}/reviews?questId=${questId}`
     );
     expect(response.status()).toBe(200);
 
@@ -154,11 +154,11 @@ test.describe.serial("レビューAPI E2Eテスト", () => {
   });
 
   // 削除後確認
-  test("GET /reviews/check/:userId/:questId — 削除後はfalseになる", async ({
+  test("GET /users/:userId/reviews?questId=:questId — 削除後はfalseになる", async ({
     request,
   }) => {
     const response = await request.get(
-      `${API_BASE}/reviews/check/${userId}/${questId}`
+      `${API_BASE}/users/${userId}/reviews?questId=${questId}`
     );
     expect(response.status()).toBe(200);
 

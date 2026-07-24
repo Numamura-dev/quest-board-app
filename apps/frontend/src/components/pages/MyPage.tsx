@@ -7,134 +7,12 @@ import NotificationList from "../organisms/NotificationList";
 import { useAuth } from "@/hooks/useAuth";
 import { userService } from "@/services/user";
 import type { UserResponse } from "@/services/user";
-import { authenticatedHttpRequest } from "@/services/httpClient";
-import { questService } from "@/services/quest";
-import type { Quest as FullQuest } from "@quest-board/types";
-
-type QuestEntry = { id: number };
-
-type QuestData = {
-  participating: QuestEntry[];
-  completed: QuestEntry[];
-  applied: QuestEntry[];
-};
-
-// バックエンド /mypage/notifications の実レスポンス型
-type ApiNotification = {
-  id: number;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
-};
-
-// NotificationList/NotificationCard が要求する表示用型
-type DisplayNotification = {
-  id: number;
-  message: string;
-  type: "success" | "reward" | "info";
-  timestamp: string;
-};
-
-const toDisplayNotification = (n: ApiNotification): DisplayNotification => ({
-  id: n.id,
-  message: n.message,
-  type: "info",
-  timestamp: new Date(n.createdAt).toLocaleString("ja-JP"),
-});
-
-type FullQuestData = {
-  participating: FullQuest[];
-  completed: FullQuest[];
-  applied: FullQuest[];
-};
+import { useMyPageData } from "@/hooks/useMyPageData";
 
 const MyPage: React.FC = () => {
   const { user: authUser } = useAuth();
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [quests, setQuests] = useState<QuestData>({
-    participating: [],
-    completed: [],
-    applied: [],
-  });
-  const [notifications, setNotifications] = useState<DisplayNotification[]>([]);
-  const [fullQuests, setFullQuests] = useState<FullQuestData>({
-    participating: [],
-    completed: [],
-    applied: [],
-  });
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        // 認証ユーザーがいる場合のみ、Bearer付きで取得
-        const [entries, notificationsJson] = await Promise.all([
-          authenticatedHttpRequest<QuestData>({
-            method: "GET",
-            path: "/mypage/entries",
-          }),
-          authenticatedHttpRequest<ApiNotification[]>({
-            method: "GET",
-            path: "/mypage/notifications",
-          }),
-        ]);
-
-        if (cancelled) return;
-
-        setQuests(entries || { participating: [], completed: [], applied: [] });
-
-        // 履歴に出すクエストを一覧と同じ詳細カードで表示するために詳細データを取得
-        const ids = Array.from(
-          new Set([
-            ...(entries?.participating || []).map((q) => q.id),
-            ...(entries?.completed || []).map((q) => q.id),
-            ...(entries?.applied || []).map((q) => q.id),
-          ])
-        ).filter((id) => typeof id === "number" || typeof id === "string");
-
-        // 一覧と同じ取得元に統一（全件取得→IDで絞り込み）
-        const allQuests = await questService.getAllQuests();
-        const fetchedList = allQuests.filter((q) => ids.includes(q.id));
-
-        // クエストカードのstatusに基づいて分類
-        const participating: FullQuest[] = [];
-        const completed: FullQuest[] = [];
-        const applied: FullQuest[] = [];
-
-        fetchedList.forEach((quest) => {
-          const status = String(quest.status || "").toLowerCase();
-          if (status === "active" || status === "in_progress") {
-            participating.push(quest);
-          } else if (status === "completed") {
-            completed.push(quest);
-          } else {
-            applied.push(quest);
-          }
-        });
-
-        setFullQuests({
-          participating,
-          completed,
-          applied,
-        });
-        setNotifications(
-          Array.isArray(notificationsJson)
-            ? notificationsJson.map(toDisplayNotification)
-            : []
-        );
-      } catch (error) {
-        console.error("/mypage データ取得に失敗しました", error);
-        if (!cancelled) {
-          setQuests({ participating: [], completed: [], applied: [] });
-          setNotifications([]);
-          setFullQuests({ participating: [], completed: [], applied: [] });
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { notifications, questGroups } = useMyPageData();
 
   // 認証ユーザーが確定・変化したらDBユーザーを取得（ヘッダーと同様）
   useEffect(() => {
@@ -177,7 +55,7 @@ const MyPage: React.FC = () => {
         }
 
         {/* 参加中・完了済みクエスト（一覧と同じカード情報を使用）*/}
-        <QuestHistory questData={fullQuests} />
+        <QuestHistory questData={questGroups} />
 
         {/* 通知メッセージ */}
         <NotificationList notifications={notifications} />

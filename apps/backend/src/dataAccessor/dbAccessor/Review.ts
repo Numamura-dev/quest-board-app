@@ -30,6 +30,9 @@ export interface UpdateReviewData {
   comment?: string;
 }
 
+/**
+ * レビューテーブルと関連ユーザー情報へのアクセスを提供する。
+ */
 export class ReviewDataAccessor {
   /**
    * クエストIDでレビュー一覧取得

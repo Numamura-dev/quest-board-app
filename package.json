@@ -12,6 +12,7 @@
 		"dev:docs": "pnpm --filter docs run dev",
 		"dev:frontend": "pnpm --filter frontend run dev",
 		"dev:backend": "pnpm --filter backend run dev",
+		"docs:screenshots": "pnpm --filter e2e run manual:screenshots",
 		"prepare": "husky",
 		"format": "node scripts/run-biome.cjs format --write .",
 		"format:check": "node scripts/run-biome.cjs format .",

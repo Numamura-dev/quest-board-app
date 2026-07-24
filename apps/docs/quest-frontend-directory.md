@@ -1,5 +1,10 @@
 # クエスト掲示板アプリケーション設計方針（App Router対応）
 
+::: tip このページの使い方
+フロントエンド実装で、画面、コンポーネント、hooks、services の入口を探すための資料です。
+最新の実コードは `apps/frontend/src` を確認し、このページは配置方針と読み解きの補助として使ってください。
+:::
+
 ## 使用技術
 - フロントエンド：React, TypeScript, Next.js（App Router 構成）
 - コンポーネント設計：Atomic Design（テンプレート層は除く）

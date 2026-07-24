@@ -1,3 +1,9 @@
+# クエスト掲示板 ER 図
+
+DB の全体関係を Mermaid ER 図で確認するためのページです。
+各テーブルの項目説明は [テーブル定義](./quest-tdd.md) を参照してください。
+
+```mermaid
 erDiagram
 
 users {
@@ -98,3 +104,4 @@ quests ||--o{ rewards : has
 quests ||--o{ quest_recommendations : is_recommended
 
 titles ||--o{ user_titles : assigned_to
+```

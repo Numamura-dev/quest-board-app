@@ -24,6 +24,9 @@ import {
 	ReviewIdParamSchema,
 	ReviewSchema,
 	ReviewUpdateBodySchema,
+	TagCleanupResponseSchema,
+	TagListResponseSchema,
+	UnusedTagListResponseSchema,
 	UserIdParamSchema,
 	UserListQuerySchema,
 	UserReviewParamSchema,
@@ -397,6 +400,44 @@ registry.registerPath({
 		200: {
 			description: "更新結果",
 			content: jsonContent(CreateUserResponseSchema),
+		},
+	},
+});
+
+registry.registerPath({
+	method: "get",
+	path: "/api/tags",
+	summary: "アクティブなクエストのタグ一覧を取得する",
+	responses: {
+		200: {
+			description: "タグ一覧",
+			content: jsonContent(TagListResponseSchema),
+		},
+	},
+});
+
+registry.registerPath({
+	method: "get",
+	path: "/api/tags/unused",
+	summary: "未使用タグ一覧を取得する（管理者用）",
+	security: [{ bearerAuth: [] }],
+	responses: {
+		200: {
+			description: "未使用タグ一覧",
+			content: jsonContent(UnusedTagListResponseSchema),
+		},
+	},
+});
+
+registry.registerPath({
+	method: "delete",
+	path: "/api/tags/unused",
+	summary: "未使用タグをクリーンアップする（管理者用）",
+	security: [{ bearerAuth: [] }],
+	responses: {
+		200: {
+			description: "クリーンアップ結果",
+			content: jsonContent(TagCleanupResponseSchema),
 		},
 	},
 });

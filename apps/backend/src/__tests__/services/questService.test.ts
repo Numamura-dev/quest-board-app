@@ -62,6 +62,30 @@ describe("questService", () => {
       });
       expect(result).toEqual(mockQuestList);
     });
+
+    it("participantUserId で参加者による絞り込みができる", async () => {
+      const participantUserId = 42;
+      const result = await getAllQuestsService({ participantUserId });
+
+      expect(mockQuestDataAccessor.findAll).toHaveBeenCalledWith({
+        participantUserId,
+      });
+      expect(result).toEqual(mockQuestList);
+    });
+
+    it("keyword, status, participantUserId の3条件で絞り込める", async () => {
+      const keyword = "テスト";
+      const status = "active";
+      const participantUserId = 10;
+      const result = await getAllQuestsService({ keyword, status, participantUserId });
+
+      expect(mockQuestDataAccessor.findAll).toHaveBeenCalledWith({
+        keyword,
+        status,
+        participantUserId,
+      });
+      expect(result).toEqual(mockQuestList);
+    });
   });
 
   describe("getAllQuestsIncludingDeletedService", () => {

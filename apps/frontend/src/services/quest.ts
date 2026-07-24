@@ -18,6 +18,7 @@ export const questService = {
   getAllQuests: async (params?: {
     keyword?: string;
     status?: string;
+    participantUserId?: number;
   }): Promise<Quest[]> => {
     return apiClient.get<Quest[]>("/quests", params);
   },

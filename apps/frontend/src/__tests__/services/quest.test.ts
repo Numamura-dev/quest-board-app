@@ -1,7 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { questService } from "@/services/quest";
-import { QuestStatus, QuestType } from "@/types/quest";
-import type { Quest } from "@/types/quest";
+import { type Quest, QuestStatus, QuestType } from "@quest-board/types";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // httpClient をモック化
 vi.mock("@/services/httpClient", () => ({
@@ -112,10 +111,9 @@ describe("questService", () => {
 
 			await questService.getAllQuestsIncludingDeleted();
 
-			expect(authenticatedApiClient.get).toHaveBeenCalledWith(
-				"/quests",
-				{ includeDeleted: true },
-			);
+			expect(authenticatedApiClient.get).toHaveBeenCalledWith("/quests", {
+				includeDeleted: true,
+			});
 		});
 	});
 

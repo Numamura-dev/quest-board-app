@@ -17,8 +17,8 @@ const apiOrigin = getApiOrigin(apiBaseUrl);
 const isDev = process.env.NODE_ENV !== "production";
 
 // 'unsafe-eval' は HMR のため開発環境のみ許可する。
-// 'unsafe-inline' は Next.js が注入するインラインスクリプト対応のため残しているが、
-// 本番での完全排除は middleware による nonce 付与が必要（別 issue で対応予定）。
+// 'unsafe-inline' は Next.js が注入するインラインスクリプト対応のため残している暫定措置。
+// 本番での完全排除は Middleware による nonce 付与が必要（issue #324 で追跡）。
 const scriptSrc = isDev
   ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com"
   : "script-src 'self' 'unsafe-inline' https://apis.google.com";

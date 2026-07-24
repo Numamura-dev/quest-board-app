@@ -126,7 +126,7 @@ npm install -g pnpm
 ### 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/Numamura-dev/quest-board-app.git
+git clone https://github.com/natsumi-a98/quest-board-app.git
 cd quest-board-app
 ```
 
@@ -164,6 +164,7 @@ cp apps/backend/.env.local.example apps/backend/.env.local
 ```
 
 `apps/backend/.env.local` を開き、各項目を設定してください。
+
 ```env
 # Firebase Admin SDK（Firebase コンソール > プロジェクトの設定 > サービスアカウント から取得）
 FIREBASE_PROJECT_ID=your-project-id
@@ -262,7 +263,6 @@ pnpm dev:docs
 | `pnpm build` | 全サービスをビルド |
 | `pnpm lint` | Biome でコードをチェック |
 | `pnpm lint:fix` | Biome で自動修正 |
-| `pnpm openapi:diff-to-zod -- --base <base-openapi.json> --head <head-openapi.json> [--out <output.ts>]` | OpenAPI 差分から zod schema の叩き台を生成 |
 | `pnpm db:generate` | Prisma クライアントを生成 |
 | `pnpm db:push` | スキーマをDBに反映 |
 | `pnpm db:studio` | Prisma Studio（DB GUI）を起動 |
@@ -280,6 +280,18 @@ pnpm dev:docs
 
 ---
 
+## ドキュメントサイト
+
+プロジェクトの設計資料・規約は VitePress サイトとして `apps/docs/` にまとまっています。
+
+```bash
+pnpm dev:docs   # http://localhost:5173 で確認
+```
+
+主なコンテンツ: スタイルガイド / コーディング規約 / API 一覧 / ディレクトリ構成（FE・BE）/ 要件定義書 / テーブル定義書 / レビュー規約 / ログ設計書
+
+---
+
 ## API ドキュメント
 
 バックエンド起動後、以下で OpenAPI を確認できます。
@@ -288,21 +300,6 @@ pnpm dev:docs
 - OpenAPI JSON: `http://localhost:3001/api/openapi.json`
 
 現在の request schema は backend の `zod` を source of truth とし、OpenAPI ドキュメントも同じ schema から生成します。新しい API を追加する場合は、controller に手書きの `if` を足すのではなく、`apps/backend/src/schemas/api.ts` に schema を追加して `validateRequest` から利用してください。
-
-API path は REST の原則に沿って設計します。動詞を path に埋め込むより、resource と HTTP method で意味を表現してください。
-
-例:
-- `POST /api/users/create` ではなく `POST /api/users`
-- `GET /api/users/all` ではなく `GET /api/users`
-- `POST /api/quests/:questId/join` ではなく `POST /api/quests/:questId/participants`
-- `GET /api/reviews/quest/:questId` ではなく `GET /api/quests/:questId/reviews`
-- `POST /api/quests/:id/restore` のような状態遷移も、可能なら `restorations` `activations` のような resource 名で表現する
-
-既存 OpenAPI の差分から zod schema の叩き台を作る場合は、次のコマンドを使います。
-
-```bash
-pnpm openapi:diff-to-zod -- --base <base-openapi.json> --head <head-openapi.json> [--out <output.ts>]
-```
 
 VS Code では `.vscode/extensions.json` に OpenAPI 向けの推奨拡張を追加しています。workspace を開くと推奨が表示されます。
 

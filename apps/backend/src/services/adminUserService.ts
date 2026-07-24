@@ -4,10 +4,20 @@ import { logger } from "../config/logger";
 
 const userDataAccessor = new UserDataAccessor();
 
+/**
+ * 管理画面向けのユーザー一覧を取得する。
+ * @returns 管理者向けユーザー一覧
+ */
 export const getAllUsersForAdminService = async () => {
   return await userDataAccessor.getAllForAdmin();
 };
 
+/**
+ * ユーザーのロールを更新する。
+ * @param userId - 更新対象のユーザー ID
+ * @param newRole - 更新後のロール
+ * @returns 更新後のユーザー情報
+ */
 export const updateUserRoleService = async (
   userId: number,
   newRole: string

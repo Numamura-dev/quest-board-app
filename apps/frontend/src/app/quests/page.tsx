@@ -3,5 +3,9 @@
 import QuestList from "@/components/organisms/QuestList";
 
 export default function QuestsPage() {
-  return <QuestList />;
+  return (
+    <main id="main-content">
+      <QuestList />
+    </main>
+  );
 }

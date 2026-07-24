@@ -1,5 +1,24 @@
 # Codex Rules
 
+このファイルは Codex / OpenAI エージェント向けのルールファイルです。
+Claude Code を使う場合は CLAUDE.md を参照してください。
+
+## Commands
+
+詳細は README.md 参照。主要コマンドのみ抜粋:
+
+```bash
+pnpm dev                    # 全サービス並列起動
+pnpm build                  # 全体ビルド (docs -> frontend -> backend)
+pnpm lint / pnpm lint:fix   # Biome check / 自動修正
+pnpm --filter backend test  # Jest (バックエンド)
+pnpm --filter frontend test # Vitest (フロントエンド)
+pnpm --filter backend typecheck
+docker compose up -d        # MySQL 起動 (DB 操作前に必要)
+pnpm db:push                # Prisma スキーマを DB に反映
+pnpm --filter backend seed  # シードデータ投入
+```
+
 ## General
 
 - 返答、レビューコメント、PR 本文は日本語で記述する。
@@ -16,8 +35,7 @@
 
 ## Editing
 
-- 手動編集は `apply_patch` を使う。
-- 変更は必要最小限にとどめ、 unrelated な修正を混ぜない。
+- 変更は必要最小限にとどめ、unrelated な修正を混ぜない。
 - frontend / backend / docs をまたぐ変更は、なぜまたぐ必要があるかを説明する。
 - デフォルトは ASCII を使い、既存ファイルに合わせる場合のみ例外を認める。
 

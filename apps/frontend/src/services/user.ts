@@ -5,13 +5,11 @@ export interface UserResponse {
   name: string;
   email: string;
   role?: string;
-}
-
-export interface GetUserIdResponse {
-  userId: number;
+  created_at?: string;
 }
 
 export interface FindUserRequest {
+  [key: string]: string | undefined;
   name?: string;
   email?: string;
 }
@@ -22,8 +20,9 @@ export const userService = {
    */
   findUserByNameOrEmail: async (
     data: FindUserRequest
-  ): Promise<UserResponse> => {
-    return authenticatedApiClient.post<UserResponse, FindUserRequest>("/users/find", data);
+  ): Promise<UserResponse | null> => {
+    const users = await authenticatedApiClient.get<UserResponse[]>("/users", data);
+    return users[0] ?? null;
   },
 
   /**
@@ -31,11 +30,9 @@ export const userService = {
    */
   getUserIdByNameOrEmail: async (
     data: FindUserRequest
-  ): Promise<GetUserIdResponse> => {
-    return authenticatedApiClient.post<GetUserIdResponse, FindUserRequest>(
-      "/users/get-id",
-      data
-    );
+  ): Promise<{ userId: number } | null> => {
+    const user = await userService.findUserByNameOrEmail(data);
+    return user ? { userId: user.id } : null;
   },
 
   /**
@@ -49,7 +46,7 @@ export const userService = {
    * 全ユーザーを取得（管理者用）
    */
   getAllUsers: async (): Promise<UserResponse[]> => {
-    return authenticatedApiClient.get<UserResponse[]>("/users/all");
+    return authenticatedApiClient.get<UserResponse[]>("/users");
   },
 
   /**

@@ -1,4 +1,4 @@
-import { apiClient } from "./httpClient";
+import { apiClient, authenticatedApiClient } from "./httpClient";
 
 export interface ReviewResponse {
   id: number;
@@ -14,7 +14,6 @@ export interface ReviewResponse {
 }
 
 export interface CreateReviewRequest {
-  reviewer_id: number;
   rating: number;
   comment?: string;
 }
@@ -32,7 +31,7 @@ export const reviewService = {
    * クエストIDでレビュー一覧を取得
    */
   getReviewsByQuestId: async (questId: string): Promise<ReviewResponse[]> => {
-    return apiClient.get<ReviewResponse[]>(`/reviews/quest/${questId}`);
+    return apiClient.get<ReviewResponse[]>(`/quests/${questId}/reviews`);
   },
 
   /**
@@ -42,8 +41,8 @@ export const reviewService = {
     questId: string,
     data: CreateReviewRequest
   ): Promise<ReviewResponse> => {
-    return apiClient.post<ReviewResponse, CreateReviewRequest>(
-      `/reviews/quest/${questId}`,
+    return authenticatedApiClient.post<ReviewResponse, CreateReviewRequest>(
+      `/quests/${questId}/reviews`,
       data
     );
   },
@@ -55,7 +54,7 @@ export const reviewService = {
     reviewId: string,
     data: UpdateReviewRequest
   ): Promise<ReviewResponse> => {
-    return apiClient.put<ReviewResponse, UpdateReviewRequest>(
+    return authenticatedApiClient.put<ReviewResponse, UpdateReviewRequest>(
       `/reviews/${reviewId}`,
       data
     );
@@ -65,7 +64,7 @@ export const reviewService = {
    * レビューを削除
    */
   deleteReview: async (reviewId: string): Promise<void> => {
-    return apiClient.delete<void>(`/reviews/${reviewId}`);
+    return authenticatedApiClient.delete<void>(`/reviews/${reviewId}`);
   },
 
   /**
@@ -76,7 +75,8 @@ export const reviewService = {
     questId: string
   ): Promise<{ exists: boolean }> => {
     return apiClient.get<{ exists: boolean }>(
-      `/reviews/check/${userId}/${questId}`
+      `/users/${userId}/reviews`,
+      { questId }
     );
   },
 };

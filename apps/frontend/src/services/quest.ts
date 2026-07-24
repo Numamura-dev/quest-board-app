@@ -18,6 +18,7 @@ export const questService = {
   getAllQuests: async (params?: {
     keyword?: string;
     status?: string;
+    participantUserId?: number;
   }): Promise<Quest[]> => {
     return apiClient.get<Quest[]>("/quests", params);
   },
@@ -29,7 +30,10 @@ export const questService = {
     keyword?: string;
     status?: string;
   }): Promise<Quest[]> => {
-    return authenticatedApiClient.get<Quest[]>("/quests/admin/all", params);
+    return authenticatedApiClient.get<Quest[]>("/quests", {
+      ...params,
+      includeDeleted: true,
+    });
   },
 
   /**
@@ -104,8 +108,8 @@ export const questService = {
   reactivateQuest: async (
     id: string
   ): Promise<{ message: string; quest: Quest }> => {
-    return authenticatedApiClient.patch<{ message: string; quest: Quest }, {}>(
-      `/quests/${id}/reactivate`,
+    return authenticatedApiClient.post<{ message: string; quest: Quest }, {}>(
+      `/quests/${id}/activations`,
       {}
     );
   },
@@ -116,8 +120,8 @@ export const questService = {
   submitQuestForApproval: async (
     id: string
   ): Promise<{ message: string; quest: Quest }> => {
-    return authenticatedApiClient.patch<{ message: string; quest: Quest }, {}>(
-      `/quests/${id}/submit`,
+    return authenticatedApiClient.post<{ message: string; quest: Quest }, {}>(
+      `/quests/${id}/submissions`,
       {}
     );
   },
@@ -128,8 +132,8 @@ export const questService = {
   restoreQuest: async (
     id: string
   ): Promise<{ message: string; quest: Quest }> => {
-    return authenticatedApiClient.patch<{ message: string; quest: Quest }, {}>(
-      `/quests/${id}/restore`,
+    return authenticatedApiClient.post<{ message: string; quest: Quest }, {}>(
+      `/quests/${id}/restorations`,
       {}
     );
   },

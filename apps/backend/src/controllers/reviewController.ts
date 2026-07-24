@@ -1,88 +1,161 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
+import { ROLES } from "../constants/roles";
 import {
-  getReviewsByQuestIdService,
-  createReviewService,
-  updateReviewService,
-  deleteReviewService,
-  checkUserReviewExistsService,
+	QuestJoinParamSchema,
+	ReviewCreateBodySchema,
+	ReviewExistsQuerySchema,
+	ReviewIdParamSchema,
+	ReviewUpdateBodySchema,
+	UserReviewParamSchema,
+} from "../schemas/api";
+import {
+	checkUserReviewExistsService,
+	createReviewService,
+	deleteReviewService,
+	getReviewByIdService,
+	getReviewsByQuestIdService,
+	updateReviewService,
 } from "../services/reviewService";
+import { getUserByFirebaseUidService } from "../services/userService";
+import {
+	badRequest,
+	forbidden,
+	notFound,
+	unauthorized,
+} from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
-import { badRequest } from "../utils/appError";
+import { validateRequest } from "../utils/validate";
 
+const resolveAuthenticatedUser = async (req: Request) => {
+	const firebaseUid = req.user?.uid;
+	if (!firebaseUid) {
+		throw unauthorized();
+	}
+
+	const user = req.appUser ?? (await getUserByFirebaseUidService(firebaseUid));
+	if (!user) {
+		throw forbidden("Forbidden: user not found");
+	}
+
+	req.appUser = user;
+	return user;
+};
+
+/**
+ * クエストに紐づくレビュー一覧を返す。
+ */
 export const getReviewsByQuestId = asyncHandler(
-  async (req: Request, res: Response) => {
-    const questId = Number(req.params.questId);
-    const reviews = await getReviewsByQuestIdService(questId);
-    res.json(reviews);
-  }
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: QuestJoinParamSchema });
+		const { questId } = params;
+		const reviews = await getReviewsByQuestIdService(questId);
+		res.json(reviews);
+	},
 );
 
-export const createReview = asyncHandler(async (req: Request, res: Response) => {
-  const questId = Number(req.params.questId);
-  const { reviewer_id, rating, comment } = req.body;
+/**
+ * クエストへのレビューを新規作成する。
+ */
+export const createReview = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params, body } = validateRequest(req, {
+			params: QuestJoinParamSchema,
+			body: ReviewCreateBodySchema,
+		});
+		const currentUser = await resolveAuthenticatedUser(req);
+		const { questId } = params;
+		const { rating, comment } = body;
 
-  if (!reviewer_id || !rating) {
-    throw badRequest("reviewer_id and rating are required");
-  }
+		try {
+			const review = await createReviewService({
+				questId,
+				reviewer_id: currentUser.id,
+				rating,
+				comment,
+			});
 
-  if (rating < 1 || rating > 5) {
-    throw badRequest("rating must be between 1 and 5");
-  }
+			res.status(201).json(review);
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message.includes("既にレビューを投稿済み")
+			) {
+				throw badRequest(error.message);
+			}
 
-  try {
-    const review = await createReviewService({
-      questId,
-      reviewer_id,
-      rating,
-      comment,
-    });
+			throw error;
+		}
+	},
+);
 
-    res.status(201).json(review);
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.includes("既にレビューを投稿済み")
-    ) {
-      throw badRequest(error.message);
-    }
+/**
+ * 既存レビューを更新する。
+ */
+export const updateReview = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params, body } = validateRequest(req, {
+			params: ReviewIdParamSchema,
+			body: ReviewUpdateBodySchema,
+		});
+		const currentUser = await resolveAuthenticatedUser(req);
+		const { reviewId } = params;
+		const { rating, comment } = body;
+		const existingReview = await getReviewByIdService(reviewId);
+		if (!existingReview) {
+			throw notFound("Review not found");
+		}
+		if (
+			currentUser.role !== ROLES.ADMIN &&
+			existingReview.reviewer_id !== currentUser.id
+		) {
+			throw forbidden("Forbidden: review owner required");
+		}
 
-    throw error;
-  }
-});
+		const review = await updateReviewService(reviewId, {
+			rating,
+			comment,
+		});
+		res.json(review);
+	},
+);
 
-export const updateReview = asyncHandler(async (req: Request, res: Response) => {
-  const reviewId = Number(req.params.reviewId);
-  const { rating, comment } = req.body;
+/**
+ * レビューを削除する。
+ */
+export const deleteReview = asyncHandler(
+	async (req: Request, res: Response) => {
+		const { params } = validateRequest(req, { params: ReviewIdParamSchema });
+		const currentUser = await resolveAuthenticatedUser(req);
+		const { reviewId } = params;
+		const existingReview = await getReviewByIdService(reviewId);
+		if (!existingReview) {
+			throw notFound("Review not found");
+		}
+		if (
+			currentUser.role !== ROLES.ADMIN &&
+			existingReview.reviewer_id !== currentUser.id
+		) {
+			throw forbidden("Forbidden: review owner required");
+		}
 
-  if (!rating) {
-    throw badRequest("rating is required");
-  }
+		await deleteReviewService(reviewId);
+		res.status(204).send();
+	},
+);
 
-  if (rating < 1 || rating > 5) {
-    throw badRequest("rating must be between 1 and 5");
-  }
-
-  const review = await updateReviewService(reviewId, {
-    rating,
-    comment,
-  });
-  res.json(review);
-});
-
-export const deleteReview = asyncHandler(async (req: Request, res: Response) => {
-  const reviewId = Number(req.params.reviewId);
-  await deleteReviewService(reviewId);
-  res.status(204).send();
-});
-
+/**
+ * 指定ユーザーが対象クエストにレビュー済みかを返す。
+ */
 export const checkUserReviewExists = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { userId, questId } = req.params;
-    const exists = await checkUserReviewExistsService(
-      Number(userId),
-      Number(questId)
-    );
+	async (req: Request, res: Response) => {
+		const { params, query } = validateRequest(req, {
+			params: UserReviewParamSchema,
+			query: ReviewExistsQuerySchema,
+		});
+		const { userId } = params;
+		const { questId } = query;
+		const exists = await checkUserReviewExistsService(userId, questId);
 
-    res.json({ exists });
-  }
+		res.json({ exists });
+	},
 );

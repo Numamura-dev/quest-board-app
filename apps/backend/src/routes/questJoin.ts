@@ -6,6 +6,6 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 const router = Router();
 
 // クエスト参加
-router.post("/:questId/join", authMiddleware, joinQuest);
+router.post("/:questId/participants", authMiddleware, joinQuest);
 
 export default router;

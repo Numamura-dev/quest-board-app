@@ -2,8 +2,8 @@ import type { Request, Response } from "express";
 import { ROLES } from "../constants/roles";
 import {
 	CreateUserBodySchema,
-	FindUserBodySchema,
 	UserIdParamSchema,
+	UserListQuerySchema,
 } from "../schemas/api";
 import {
 	createUserService,
@@ -12,42 +12,52 @@ import {
 	getAllUsersService,
 	getUserByFirebaseUidService,
 } from "../services/userService";
-import { conflict, notFound, unauthorized } from "../utils/appError";
+import { conflict, forbidden, notFound, unauthorized } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
-export const findUserByNameOrEmail = asyncHandler(
-	async (req: Request, res: Response) => {
-		const { body } = validateRequest(req, { body: FindUserBodySchema });
-		const { name, email } = body;
+/**
+ * クエリ有無に応じてユーザー検索または管理者向け一覧取得を行う。
+ */
+export const getUsers = asyncHandler(async (req: Request, res: Response) => {
+	const { query } = validateRequest(req, { query: UserListQuerySchema });
+	const { name, email } = query;
 
-		const user = await findUserByNameOrEmailService(name, email);
+	if (name || email) {
+		const user = await findUserByNameOrEmailService(name || "", email || "");
 		if (!user) {
-			throw notFound("User not found");
+			res.json([]);
+			return;
 		}
 
-		res.json({
-			id: user.id,
-			name: user.name,
-			email: user.email,
-		});
-	},
-);
+		res.json([
+			{
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+			},
+		]);
+		return;
+	}
 
-export const getUserIdByNameOrEmail = asyncHandler(
-	async (req: Request, res: Response) => {
-		const { body } = validateRequest(req, { body: FindUserBodySchema });
-		const { name, email } = body;
+	const firebaseUser = req.user;
+	if (!firebaseUser) {
+		throw unauthorized();
+	}
 
-		const user = await findUserByNameOrEmailService(name, email);
-		if (!user) {
-			throw notFound("User not found");
-		}
+	const currentUser = await getUserByFirebaseUidService(firebaseUser.uid);
+	if (!currentUser || currentUser.role !== ROLES.ADMIN) {
+		throw forbidden("Forbidden: admin access required");
+	}
 
-		res.json({ userId: user.id });
-	},
-);
+	const users = await getAllUsersService();
+	res.json(users);
+});
 
+/**
+ * 認証済み Firebase ユーザーをアプリケーションユーザーとして登録する。
+ */
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
 	const firebaseUser = req.user;
 	if (!firebaseUser) {
@@ -83,6 +93,9 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 	});
 });
 
+/**
+ * 認証済みユーザーのプロフィールを返す。
+ */
 export const getCurrentUser = asyncHandler(
 	async (req: Request, res: Response) => {
 		const firebaseUser = req.user;
@@ -104,13 +117,9 @@ export const getCurrentUser = asyncHandler(
 	},
 );
 
-export const getAllUsers = asyncHandler(
-	async (_req: Request, res: Response) => {
-		const users = await getAllUsersService();
-		res.json(users);
-	},
-);
-
+/**
+ * ユーザーを関連データとあわせて削除する。
+ */
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 	const { params } = validateRequest(req, { params: UserIdParamSchema });
 	const { id } = params;

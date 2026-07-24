@@ -2,8 +2,10 @@
 	"name": "backend",
 	"private": true,
 	"scripts": {
-		"dev": "nodemon --exec tsx src/app.ts",
+		"dev": "tsx watch src/app.ts",
 		"build": "tsc",
+		"openapi:diff-to-zod": "tsx scripts/openapiDiffToZod.ts",
+		"prisma:generate": "prisma generate --schema prisma/schema.prisma",
 		"seed": "tsx prisma/seed.ts",
 		"seed:inactive": "tsx prisma/add-inactive-quests.ts",
 		"start": "node dist/app.js",

@@ -1,6 +1,10 @@
-import React from "react";
 import MyPage from "@/components/pages/MyPage";
+import React from "react";
 
 export default function Page() {
-  return <MyPage />;
+	return (
+		<main id="main-content">
+			<MyPage />
+		</main>
+	);
 }

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { httpRequest, authenticatedHttpRequest } from "@/services/httpClient";
+import { authenticatedHttpRequest, httpRequest } from "@/services/httpClient";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // firebase モック（authenticatedHttpRequest 用）
 vi.mock("@/services/firebase", () => ({
@@ -122,8 +122,8 @@ describe("httpRequest", () => {
 
 describe("authenticatedHttpRequest", () => {
 	it("currentUser が null の場合に Error をスロー", async () => {
-		await expect(
-			authenticatedHttpRequest({ path: "/quests/admin/all" }),
-		).rejects.toThrow("User not authenticated");
+		await expect(authenticatedHttpRequest({ path: "/quests" })).rejects.toThrow(
+			"User not authenticated",
+		);
 	});
 });

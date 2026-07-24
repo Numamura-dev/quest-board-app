@@ -1,64 +1,64 @@
+import { Prisma, type Quest } from "@prisma/client";
 import {
-  QuestDataAccessor,
-  QuestWithRelations,
-  CreateQuestData,
+	CreateQuestData,
+	QuestDataAccessor,
+	type QuestWithRelations,
 } from "../../dataAccessor/dbAccessor/Quest";
-import { Quest, Prisma } from "@prisma/client";
 
 // モックデータ
 export const mockQuest: Quest = {
-  id: 1,
-  title: "テストクエスト",
-  description: "テスト用のクエストです",
-  type: "development",
-  status: "active",
-  maxParticipants: 5,
-  tags: ["test", "development"],
-  start_date: new Date("2024-01-01"),
-  end_date: new Date("2024-01-31"),
-  created_at: new Date("2024-01-01"),
-  updated_at: new Date("2024-01-01"),
-  rewards_id: 1,
+	id: 1,
+	title: "テストクエスト",
+	description: "テスト用のクエストです",
+	type: "development",
+	status: "active",
+	maxParticipants: 5,
+	tags: ["test", "development"],
+	start_date: new Date("2024-01-01"),
+	end_date: new Date("2024-01-31"),
+	created_at: new Date("2024-01-01"),
+	updated_at: new Date("2024-01-01"),
+	rewards_id: 1,
 } as Quest;
 
 export const mockQuestWithRelations: QuestWithRelations = {
-  ...mockQuest,
-  deleted_at: null,
-  rewards: {
-    id: 1,
-    quest_id: 1,
-    incentive_amount: new Prisma.Decimal(1000),
-    point_amount: 100,
-    note: "テスト報酬",
-    created_at: new Date("2024-01-01"),
-    updated_at: new Date("2024-01-01"),
-  },
-  quest_participants: [],
-  _count: {
-    quest_participants: 0,
-  },
+	...mockQuest,
+	deleted_at: null,
+	rewards: {
+		id: 1,
+		quest_id: 1,
+		incentive_amount: new Prisma.Decimal(1000),
+		point_amount: 100,
+		note: "テスト報酬",
+		created_at: new Date("2024-01-01"),
+		updated_at: new Date("2024-01-01"),
+	},
+	quest_participants: [],
+	_count: {
+		quest_participants: 0,
+	},
 } as QuestWithRelations;
 
 export const mockQuestList: QuestWithRelations[] = [
-  mockQuestWithRelations,
-  {
-    ...mockQuestWithRelations,
-    id: 2,
-    title: "テストクエスト2",
-    status: "completed",
-  },
+	mockQuestWithRelations,
+	{
+		...mockQuestWithRelations,
+		id: 2,
+		title: "テストクエスト2",
+		status: "completed",
+	},
 ];
 
 // QuestDataAccessorのモック実装
 export const mockQuestDataAccessor = {
-  findAll: jest.fn(),
-  findAllIncludingDeleted: jest.fn(),
-  findById: jest.fn(),
-  updateStatus: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  restore: jest.fn(),
+	findAll: jest.fn(),
+	findAllIncludingDeleted: jest.fn(),
+	findById: jest.fn(),
+	updateStatus: jest.fn(),
+	create: jest.fn(),
+	update: jest.fn(),
+	delete: jest.fn(),
+	restore: jest.fn(),
 };
 
 // モックのデフォルト実装を設定

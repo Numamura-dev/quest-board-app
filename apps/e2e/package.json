@@ -1,23 +1,23 @@
 {
-  "name": "e2e",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "playwright test",
-    "test:chromium": "playwright test --project=chromium",
-    "test:firefox": "playwright test --project=firefox",
-    "test:webkit": "playwright test --project=webkit",
-    "test:all": "playwright test"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "packageManager": "pnpm@10.13.1",
-  "devDependencies": {
-    "@playwright/test": "^1.56.0",
-    "@types/dotenv": "^8.2.3",
-    "@types/node": "^24.7.2",
-    "dotenv": "^16.6.1"
-  }
+	"name": "e2e",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "playwright test",
+		"test:chromium": "playwright test --project=chromium",
+		"test:firefox": "playwright test --project=firefox",
+		"test:webkit": "playwright test --project=webkit",
+		"test:all": "playwright test"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.13.1",
+	"devDependencies": {
+		"@playwright/test": "^1.56.0",
+		"@types/dotenv": "^8.2.3",
+		"@types/node": "^24.7.2",
+		"dotenv": "^16.6.1"
+	}
 }

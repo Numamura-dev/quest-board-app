@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { questService } from "@/services/quest";
 import { QuestStatus, QuestType } from "@/types/quest";
 import type { Quest } from "@/types/quest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // httpClient をモック化
 vi.mock("@/services/httpClient", () => ({
@@ -112,10 +112,29 @@ describe("questService", () => {
 
 			await questService.getAllQuestsIncludingDeleted();
 
-			expect(authenticatedApiClient.get).toHaveBeenCalledWith(
-				"/quests/admin/all",
-				undefined,
+			expect(authenticatedApiClient.get).toHaveBeenCalledWith("/quests", {
+				includeDeleted: true,
+			});
+		});
+	});
+
+	describe("reactivateQuest", () => {
+		it("再公開エンドポイントを POST で呼ぶ", async () => {
+			vi.mocked(authenticatedApiClient.post).mockResolvedValueOnce({
+				message: "reactivated",
+				quest: mockQuest,
+			});
+
+			const result = await questService.reactivateQuest("1");
+
+			expect(authenticatedApiClient.post).toHaveBeenCalledWith(
+				"/quests/1/activations",
+				{},
 			);
+			expect(result).toEqual({
+				message: "reactivated",
+				quest: mockQuest,
+			});
 		});
 	});
 });

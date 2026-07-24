@@ -18,21 +18,49 @@ import {
 	updateQuestStatusService,
 } from "../services/questService";
 import { getUserByFirebaseUidService } from "../services/userService";
-import { badRequest, notFound } from "../utils/appError";
+import {
+	badRequest,
+	forbidden,
+	notFound,
+	unauthorized,
+} from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
+/**
+ * 公開クエスト一覧を返す。
+ */
 export const getAllQuests = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { query } = validateRequest(req, { query: QuestListQuerySchema });
-		const quests = await getAllQuestsService({
+		const filters = {
 			keyword: query.keyword,
 			status: query.status,
-		});
+		};
+
+		if (query.includeDeleted) {
+			if (!req.user?.uid) {
+				throw unauthorized();
+			}
+
+			const user = await getUserByFirebaseUidService(req.user.uid);
+			if (!user || user.role !== ROLES.ADMIN) {
+				throw forbidden("Forbidden: admin access required");
+			}
+
+			const quests = await getAllQuestsIncludingDeletedService(filters);
+			res.json(quests);
+			return;
+		}
+
+		const quests = await getAllQuestsService(filters);
 		res.json(quests);
 	},
 );
 
+/**
+ * クエストのステータスを更新する。
+ */
 export const updateQuestStatus = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { params, body } = validateRequest(req, {
@@ -47,6 +75,9 @@ export const updateQuestStatus = asyncHandler(
 	},
 );
 
+/**
+ * クエスト詳細を 1 件返す。
+ */
 export const getQuestById = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { params } = validateRequest(req, { params: QuestIdParamSchema });
@@ -54,11 +85,14 @@ export const getQuestById = asyncHandler(
 		if (!quest) {
 			throw notFound("Quest not found");
 		}
-
 		res.json(quest);
 	},
 );
 
+/**
+ * クエストを新規作成する。
+ * 一般ユーザーが status 未指定で作成した場合は pending に補正する。
+ */
 export const createQuest = asyncHandler(async (req: Request, res: Response) => {
 	const { body } = validateRequest(req, { body: QuestMutationBodySchema });
 	const {
@@ -107,6 +141,9 @@ export const createQuest = asyncHandler(async (req: Request, res: Response) => {
 	res.status(201).json(quest);
 });
 
+/**
+ * 既存クエストを更新する。
+ */
 export const updateQuest = asyncHandler(async (req: Request, res: Response) => {
 	const { params, body } = validateRequest(req, {
 		params: QuestIdParamSchema,
@@ -152,6 +189,9 @@ export const updateQuest = asyncHandler(async (req: Request, res: Response) => {
 	}
 });
 
+/**
+ * クエストを論理削除する。
+ */
 export const deleteQuest = asyncHandler(async (req: Request, res: Response) => {
 	const { params } = validateRequest(req, { params: QuestIdParamSchema });
 	const { id } = params;
@@ -170,17 +210,9 @@ export const deleteQuest = asyncHandler(async (req: Request, res: Response) => {
 	}
 });
 
-export const getAllQuestsIncludingDeleted = asyncHandler(
-	async (req: Request, res: Response) => {
-		const { query } = validateRequest(req, { query: QuestListQuerySchema });
-		const quests = await getAllQuestsIncludingDeletedService({
-			keyword: query.keyword,
-			status: query.status,
-		});
-		res.json(quests);
-	},
-);
-
+/**
+ * 下書きまたは非公開クエストを承認待ちへ送る。
+ */
 export const submitQuestForApproval = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { params } = validateRequest(req, { params: QuestIdParamSchema });
@@ -205,6 +237,9 @@ export const submitQuestForApproval = asyncHandler(
 	},
 );
 
+/**
+ * 論理削除済みクエストを復元する。
+ */
 export const restoreQuest = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { params } = validateRequest(req, { params: QuestIdParamSchema });
@@ -227,6 +262,9 @@ export const restoreQuest = asyncHandler(
 	},
 );
 
+/**
+ * 非アクティブ化されたクエストを再度 active に戻す。
+ */
 export const reactivateQuest = asyncHandler(
 	async (req: Request, res: Response) => {
 		const { params } = validateRequest(req, { params: QuestIdParamSchema });

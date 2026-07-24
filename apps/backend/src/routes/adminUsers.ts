@@ -1,7 +1,7 @@
 import express from "express";
 import {
-  getAllUsersForAdmin,
-  updateUserRole,
+	getAllUsersForAdmin,
+	updateUserRole,
 } from "../controllers/adminUserController";
 import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware";
 

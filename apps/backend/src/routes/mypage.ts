@@ -1,9 +1,9 @@
 import { Router } from "express";
 import {
-  getMyEntries,
-  getMyClearedQuests,
-  getMyProfile,
-  getMyNotifications,
+	getMyClearedQuests,
+	getMyEntries,
+	getMyNotifications,
+	getMyProfile,
 } from "../controllers/mypageController";
 import { authMiddleware } from "../middlewares/auth.middleware";
 

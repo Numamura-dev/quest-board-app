@@ -58,7 +58,7 @@ model Quest {
   @@index([status, deleted_at], map: "quests_status_deleted_at_idx")
   // 一覧取得の最適化: 未削除クエストを start_date 降順で並べる実クエリに対応
   @@index([deleted_at, start_date], map: "quests_deleted_at_start_date_idx")
-  // 期間絞り込みの最適化: end_date インデックス
+  // 期間絞り込みの将来対応: 現時点でクエリに end_date 条件はないが、締切フィルタ追加時に使用予定
   @@index([end_date], map: "quests_end_date_idx")
   @@map("quests")
 }

@@ -5,7 +5,8 @@ describe("config/env", () => {
 		jest.resetModules();
 
 		if (originalDatabaseUrl === undefined) {
-			process.env.DATABASE_URL = undefined;
+			// biome-ignore lint/performance/noDelete: process.env のキー削除には delete が必要（= undefined は文字列 "undefined" になる）
+			delete process.env.DATABASE_URL;
 			return;
 		}
 
@@ -13,7 +14,8 @@ describe("config/env", () => {
 	});
 
 	it("DATABASE_URL が未設定なら分かりやすいエラーを投げる", () => {
-		process.env.DATABASE_URL = undefined;
+		// biome-ignore lint/performance/noDelete: process.env のキー削除には delete が必要
+		delete process.env.DATABASE_URL;
 
 		expect(() => {
 			jest.isolateModules(() => {

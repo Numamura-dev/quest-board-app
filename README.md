@@ -42,20 +42,13 @@ repo
 │  ├─ backend    # API、service、Prisma、認証
 │  ├─ docs       # 開発ドキュメントサイト
 │  └─ e2e        # Playwright E2E テスト
-<<<<<<< HEAD
+├─ packages
+│  └─ types      # 共有型
 ├─ docs          # AI / 開発運用の正本ドキュメント
 ├─ prompt        # 補助テンプレート
 ├─ AGENTS.md     # AI 共通ルールの正本
 ├─ CLAUDE.md     # 互換用の案内
-└─ README.md     # セットアップと repo 全体像
-=======
-├─ packages
-│  └─ types      # 共有型
-├─ docs          # AI / 開発運用の正本ドキュメント
-├─ prompt        # エージェント用テンプレート
-├─ AGENTS.md     # AI 共通ルール
 └─ README.md     # セットアップと全体像
->>>>>>> origin/main
 ```
 
 ## 変更箇所の当たり方
@@ -72,31 +65,20 @@ repo
 | テスト | `apps/frontend/src/__tests__`, `apps/backend/src/__tests__`, `apps/e2e/tests` |
 | ルール、設計 | `AGENTS.md`, `docs/architecture.md`, `docs/ai-execution.md` |
 
-<<<<<<< HEAD
-## AI 向けドキュメント導線
-
-AI が最初に読むべき文書セットは次の 5 つです。
-=======
 ## AI向けドキュメント導線
 
-AIエージェント向けの正本は以下です。
->>>>>>> origin/main
+AI が最初に読むべき文書セットは次の 6 つです。
 
 1. `README.md`
 2. `AGENTS.md`
 3. `docs/architecture.md`
 4. `docs/ai-execution.md`
 5. `prompt/agent.md`
-<<<<<<< HEAD
 6. 関連コード / 関連テスト
-=======
-6. 関連コード / テスト
->>>>>>> origin/main
 
 役割は次のとおりです。
 
 - `README.md`: セットアップ、開発コマンド、リポジトリ全体像
-<<<<<<< HEAD
 - `AGENTS.md`: AI エージェント共通ルールの正本
 - `docs/architecture.md`: repo 構造、レイヤー責務、変更判断の基準
 - `docs/ai-execution.md`: 調査、実装、検証、報告の進め方
@@ -107,15 +89,6 @@ AIエージェント向けの正本は以下です。
 - `prompt/create_issue.md`: 改善 issue を新規起票するときの補助テンプレート
 - `prompt/modify_issue.md`: 既存 issue を整理、修正するときの補助テンプレート
 - `CLAUDE.md`: `AGENTS.md` への互換エントリ
-=======
-- `AGENTS.md`: AIエージェント共通ルール
-- `docs/architecture.md`: 実装対象の構造、責務、変更時の判断基準
-- `docs/ai-execution.md`: AIの調査、実装、検証フロー
-- `prompt/agent.md`: 他エージェントにも渡せる実行テンプレート
-- `prompt/create_issue.md`: 改善 issue を新規起票するときの補助プロンプト
-- `prompt/modify_issue.md`: 既存 issue を整理、修正するときの補助プロンプト
-- `ai-docs-refactor-prompt.md`: AI 向け docs 自体を見直すときの補助プロンプト
->>>>>>> origin/main
 
 ---
 
@@ -199,6 +172,7 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 
 # Prisma / MySQL（docker-compose.yml のデフォルト値に合わせて設定）
 DATABASE_URL=mysql://app_user:app_password@localhost:3306/your_project_db
+SHADOW_DATABASE_URL=mysql://app_user:app_password@localhost:3306/your_project_shadow_db
 MYSQL_ROOT_PASSWORD=rootpassword
 MYSQL_DATABASE=your_project_db
 MYSQL_USER=app_user
@@ -248,7 +222,12 @@ pnpm db:generate
 
 # スキーマをデータベースに反映
 pnpm db:push
+
+# migration を適用する場合（任意）
+pnpm --filter backend prisma:migrate:deploy
 ```
+
+`pnpm dev:backend` と backend の test は `apps/backend/.env.local` を基準に環境変数を読むため、repo root と `apps/backend` のどちらから実行しても同じ `DATABASE_URL` を参照できます。
 
 ---
 
@@ -287,6 +266,7 @@ pnpm dev:docs
 | `pnpm db:generate` | Prisma クライアントを生成 |
 | `pnpm db:push` | スキーマをDBに反映 |
 | `pnpm db:studio` | Prisma Studio（DB GUI）を起動 |
+| `pnpm --filter backend prisma:migrate:deploy` | backend の migration を適用 |
 
 ---
 

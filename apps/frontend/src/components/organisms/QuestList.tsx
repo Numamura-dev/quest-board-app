@@ -315,6 +315,7 @@ const QuestList: React.FC = () => {
                   value={searchQuery}
                   onFocus={() => setShowSuggestions(true)}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-describedby="quest-search-help quest-search-status"
                   className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                 />
 
@@ -367,6 +368,21 @@ const QuestList: React.FC = () => {
                 <option value="inactive">停止中</option>
                 <option value="completed">完了済み</option>
               </select>
+            </div>
+
+            <div className="space-y-1 px-1">
+              <p id="quest-search-help" className="text-sm text-slate-300">
+                タイトル・本文・タグを対象に検索できます。例: React、デザイン、レビュー
+              </p>
+              <p
+                id="quest-search-status"
+                className="text-xs text-slate-400 min-h-5"
+                aria-live="polite"
+              >
+                {searchQuery
+                  ? `タイトル・本文・タグから「${searchQuery}」を検索中`
+                  : "気になるキーワードを入力すると対象が絞り込まれます"}
+              </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

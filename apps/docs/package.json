@@ -6,6 +6,7 @@
 		"vitepress-plugin-search": "1.0.4-alpha.22"
 	},
 	"scripts": {
+		"dev": "vitepress dev",
 		"dev:docs": "vitepress dev",
 		"build": "vitepress build",
 		"preview": "vitepress preview"

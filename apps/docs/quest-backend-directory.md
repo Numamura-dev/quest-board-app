@@ -1,5 +1,10 @@
 # クエスト掲示板アプリケーション設計方針
 
+::: tip このページの使い方
+バックエンド実装で、routes、controllers、services、Prisma 周辺の入口を探すための資料です。
+最新の実コードは `apps/backend/src` と `apps/backend/prisma` を確認し、このページは責務分離の補助として使ってください。
+:::
+
 ## 1. バックエンド ディレクトリ構成案
 
 backend/

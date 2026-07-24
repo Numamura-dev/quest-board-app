@@ -1,5 +1,6 @@
 "use client";
 
+import SearchHistoryDropdown from "@/components/molecules/SearchHistoryDropdown";
 import QuestJoinDialog from "@/components/organisms/QuestJoinDialog";
 import QuestListCard, {
 	type CompletedQuestButtonAction,
@@ -14,6 +15,7 @@ import {
 	getQuestTypeIconKind,
 } from "@/constants/questPresentation";
 import { useAuth } from "@/hooks/useAuth";
+import { useSearchHistory } from "@/hooks/useSearchHistory";
 import { questService } from "@/services/quest";
 import { reviewService } from "@/services/review";
 import { userService } from "@/services/user";
@@ -88,6 +90,11 @@ const QuestList: React.FC = () => {
 	>(new Map());
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 	const searchContainerRef = useRef<HTMLDivElement | null>(null);
+	const {
+		history: searchHistory,
+		addHistory,
+		clearHistory,
+	} = useSearchHistory();
 	const { user, isAuthenticated } = useAuth();
 	const router = useRouter();
 
@@ -302,7 +309,30 @@ const QuestList: React.FC = () => {
 									value={searchQuery}
 									onFocus={() => setShowSuggestions(true)}
 									onChange={(e) => setSearchQuery(e.target.value)}
+									onKeyDown={(event) => {
+										if (event.key === "Enter") {
+											const trimmed = searchQuery.trim();
+											if (trimmed) {
+												addHistory(trimmed);
+											}
+											setShowSuggestions(false);
+										}
+									}}
 									className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+								/>
+
+								<SearchHistoryDropdown
+									history={searchHistory}
+									visible={
+										showSuggestions && normalizedSearchQuery.length === 0
+									}
+									onSelect={(keyword) => {
+										setSearchQuery(keyword);
+										setDebouncedSearchQuery(keyword);
+										addHistory(keyword);
+										setShowSuggestions(false);
+									}}
+									onClear={clearHistory}
 								/>
 
 								{showSuggestions && normalizedSearchQuery.length > 0 && (
@@ -318,6 +348,7 @@ const QuestList: React.FC = () => {
 															onClick={() => {
 																setSearchQuery(quest.title);
 																setDebouncedSearchQuery(quest.title);
+																addHistory(quest.title);
 																setShowSuggestions(false);
 															}}
 														>

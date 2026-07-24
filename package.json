@@ -3,8 +3,9 @@
 	"private": true,
 	"scripts": {
 		"dev": "pnpm --parallel run dev",
-		"build": "pnpm run build:docs && pnpm run build:frontend && pnpm run build:backend",
+		"build": "pnpm run build:types && pnpm run build:docs && pnpm run build:frontend && pnpm run build:backend",
 		"openapi:diff-to-zod": "pnpm --filter backend openapi:diff-to-zod",
+		"build:types": "pnpm --filter @quest-board/types run build",
 		"build:docs": "pnpm --filter docs run build",
 		"build:frontend": "pnpm --filter frontend run build",
 		"build:backend": "pnpm --filter backend run build",

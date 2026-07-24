@@ -42,20 +42,13 @@ repo
 │  ├─ backend    # API、service、Prisma、認証
 │  ├─ docs       # 開発ドキュメントサイト
 │  └─ e2e        # Playwright E2E テスト
-<<<<<<< HEAD
+├─ packages
+│  └─ types      # 共有型
 ├─ docs          # AI / 開発運用の正本ドキュメント
 ├─ prompt        # 補助テンプレート
 ├─ AGENTS.md     # AI 共通ルールの正本
 ├─ CLAUDE.md     # 互換用の案内
-└─ README.md     # セットアップと repo 全体像
-=======
-├─ packages
-│  └─ types      # 共有型
-├─ docs          # AI / 開発運用の正本ドキュメント
-├─ prompt        # エージェント用テンプレート
-├─ AGENTS.md     # AI 共通ルール
 └─ README.md     # セットアップと全体像
->>>>>>> origin/main
 ```
 
 ## 変更箇所の当たり方
@@ -72,31 +65,20 @@ repo
 | テスト | `apps/frontend/src/__tests__`, `apps/backend/src/__tests__`, `apps/e2e/tests` |
 | ルール、設計 | `AGENTS.md`, `docs/architecture.md`, `docs/ai-execution.md` |
 
-<<<<<<< HEAD
-## AI 向けドキュメント導線
-
-AI が最初に読むべき文書セットは次の 5 つです。
-=======
 ## AI向けドキュメント導線
 
-AIエージェント向けの正本は以下です。
->>>>>>> origin/main
+AI が最初に読むべき文書セットは次の 6 つです。
 
 1. `README.md`
 2. `AGENTS.md`
 3. `docs/architecture.md`
 4. `docs/ai-execution.md`
 5. `prompt/agent.md`
-<<<<<<< HEAD
 6. 関連コード / 関連テスト
-=======
-6. 関連コード / テスト
->>>>>>> origin/main
 
 役割は次のとおりです。
 
 - `README.md`: セットアップ、開発コマンド、リポジトリ全体像
-<<<<<<< HEAD
 - `AGENTS.md`: AI エージェント共通ルールの正本
 - `docs/architecture.md`: repo 構造、レイヤー責務、変更判断の基準
 - `docs/ai-execution.md`: 調査、実装、検証、報告の進め方
@@ -107,15 +89,6 @@ AIエージェント向けの正本は以下です。
 - `prompt/create_issue.md`: 改善 issue を新規起票するときの補助テンプレート
 - `prompt/modify_issue.md`: 既存 issue を整理、修正するときの補助テンプレート
 - `CLAUDE.md`: `AGENTS.md` への互換エントリ
-=======
-- `AGENTS.md`: AIエージェント共通ルール
-- `docs/architecture.md`: 実装対象の構造、責務、変更時の判断基準
-- `docs/ai-execution.md`: AIの調査、実装、検証フロー
-- `prompt/agent.md`: 他エージェントにも渡せる実行テンプレート
-- `prompt/create_issue.md`: 改善 issue を新規起票するときの補助プロンプト
-- `prompt/modify_issue.md`: 既存 issue を整理、修正するときの補助プロンプト
-- `ai-docs-refactor-prompt.md`: AI 向け docs 自体を見直すときの補助プロンプト
->>>>>>> origin/main
 
 ---
 
@@ -153,7 +126,7 @@ npm install -g pnpm
 ### 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/Numamura-dev/quest-board-app.git
+git clone https://github.com/natsumi-a98/quest-board-app.git
 cd quest-board-app
 ```
 
@@ -191,6 +164,7 @@ cp apps/backend/.env.local.example apps/backend/.env.local
 ```
 
 `apps/backend/.env.local` を開き、各項目を設定してください。
+
 ```env
 # Firebase Admin SDK（Firebase コンソール > プロジェクトの設定 > サービスアカウント から取得）
 FIREBASE_PROJECT_ID=your-project-id
@@ -199,6 +173,7 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 
 # Prisma / MySQL（docker-compose.yml のデフォルト値に合わせて設定）
 DATABASE_URL=mysql://app_user:app_password@localhost:3306/your_project_db
+SHADOW_DATABASE_URL=mysql://app_user:app_password@localhost:3306/your_project_shadow_db
 MYSQL_ROOT_PASSWORD=rootpassword
 MYSQL_DATABASE=your_project_db
 MYSQL_USER=app_user
@@ -248,7 +223,12 @@ pnpm db:generate
 
 # スキーマをデータベースに反映
 pnpm db:push
+
+# migration を適用する場合（任意）
+pnpm --filter backend prisma:migrate:deploy
 ```
+
+`pnpm dev:backend` と backend の test は `apps/backend/.env.local` を基準に環境変数を読むため、repo root と `apps/backend` のどちらから実行しても同じ `DATABASE_URL` を参照できます。
 
 ---
 
@@ -283,10 +263,10 @@ pnpm dev:docs
 | `pnpm build` | 全サービスをビルド |
 | `pnpm lint` | Biome でコードをチェック |
 | `pnpm lint:fix` | Biome で自動修正 |
-| `pnpm openapi:diff-to-zod -- --base <base-openapi.json> --head <head-openapi.json> [--out <output.ts>]` | OpenAPI 差分から zod schema の叩き台を生成 |
 | `pnpm db:generate` | Prisma クライアントを生成 |
 | `pnpm db:push` | スキーマをDBに反映 |
 | `pnpm db:studio` | Prisma Studio（DB GUI）を起動 |
+| `pnpm --filter backend prisma:migrate:deploy` | backend の migration を適用 |
 
 ---
 
@@ -300,6 +280,18 @@ pnpm dev:docs
 
 ---
 
+## ドキュメントサイト
+
+プロジェクトの設計資料・規約は VitePress サイトとして `apps/docs/` にまとまっています。
+
+```bash
+pnpm dev:docs   # http://localhost:5173 で確認
+```
+
+主なコンテンツ: スタイルガイド / コーディング規約 / API 一覧 / ディレクトリ構成（FE・BE）/ 要件定義書 / テーブル定義書 / レビュー規約 / ログ設計書
+
+---
+
 ## API ドキュメント
 
 バックエンド起動後、以下で OpenAPI を確認できます。
@@ -308,21 +300,6 @@ pnpm dev:docs
 - OpenAPI JSON: `http://localhost:3001/api/openapi.json`
 
 現在の request schema は backend の `zod` を source of truth とし、OpenAPI ドキュメントも同じ schema から生成します。新しい API を追加する場合は、controller に手書きの `if` を足すのではなく、`apps/backend/src/schemas/api.ts` に schema を追加して `validateRequest` から利用してください。
-
-API path は REST の原則に沿って設計します。動詞を path に埋め込むより、resource と HTTP method で意味を表現してください。
-
-例:
-- `POST /api/users/create` ではなく `POST /api/users`
-- `GET /api/users/all` ではなく `GET /api/users`
-- `POST /api/quests/:questId/join` ではなく `POST /api/quests/:questId/participants`
-- `GET /api/reviews/quest/:questId` ではなく `GET /api/quests/:questId/reviews`
-- `POST /api/quests/:id/restore` のような状態遷移も、可能なら `restorations` `activations` のような resource 名で表現する
-
-既存 OpenAPI の差分から zod schema の叩き台を作る場合は、次のコマンドを使います。
-
-```bash
-pnpm openapi:diff-to-zod -- --base <base-openapi.json> --head <head-openapi.json> [--out <output.ts>]
-```
 
 VS Code では `.vscode/extensions.json` に OpenAPI 向けの推奨拡張を追加しています。workspace を開くと推奨が表示されます。
 

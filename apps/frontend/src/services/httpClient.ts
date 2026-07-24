@@ -1,5 +1,6 @@
 import { API_CONFIG } from "../constants/config";
 import { auth } from "./firebase";
+import { ApiError, isApiErrorResponse } from "./apiError";
 
 /**
  * - HTTP メソッドのユニオン型
@@ -30,7 +31,8 @@ export interface RequestOptions<TBody = unknown> {
 
 const defaultBaseUrl = API_CONFIG.BASE_URL;
 
-interface ErrorResponseBody {
+/** @deprecated use ApiError instead */
+interface LegacyErrorResponseBody {
   error?: string;
   message?: string;
 }
@@ -92,11 +94,21 @@ export async function httpRequest<TResponse = unknown, TBody = unknown>(
     const contentType = res.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
-      const errorBody = (await res.json().catch(() => null)) as
-        | ErrorResponseBody
-        | null;
-      const message =
-        errorBody?.error || errorBody?.message || res.statusText;
+      const errorBody = (await res.json().catch(() => null)) as unknown;
+
+      // バックエンドの標準エラーレスポンス形式の場合は ApiError を投げる
+      if (isApiErrorResponse(errorBody)) {
+        throw new ApiError(
+          errorBody.error,
+          errorBody.code,
+          res.status,
+          errorBody.details
+        );
+      }
+
+      // 旧形式のフォールバック
+      const legacyBody = errorBody as LegacyErrorResponseBody | null;
+      const message = legacyBody?.error || legacyBody?.message || res.statusText;
       throw new Error(`HTTP ${res.status}: ${message}`);
     }
 

@@ -120,7 +120,6 @@ lint/format コマンドはすべて `node scripts/run-biome.cjs` 経由で呼�
 
 ## コミット規約
 
-- `Co-Authored-By` トレーラーを**絶対に付けない**（Vercel のデプロイが壊れるため）。
 - Claude が行ったコミットは本文に `(by Claude)` と明記する。
 
   ```

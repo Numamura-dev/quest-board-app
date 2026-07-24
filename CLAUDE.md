@@ -37,6 +37,21 @@ pnpm --filter e2e test                                # Playwright (要 apps/e2e
 
 `test:prepush` (backend) は `typecheck` と `test --runInBand` を実行する重い検証。
 
+テストファイルの配置場所:
+- backend: `apps/backend/src/__tests__/{config,controllers,middlewares,routes,services,utils}/`
+- frontend: `apps/frontend/src/__tests__/{components,constants,hooks,services}/`
+
+## 環境変数
+
+`apps/backend/.env.local` と `apps/frontend/.env.local` を作成する（各 `.env.local.example` をコピーして値を埋める）。
+
+| ファイル | 主要変数 | 取得元 |
+|---|---|---|
+| backend | `FIREBASE_PROJECT_ID` `FIREBASE_CLIENT_EMAIL` `FIREBASE_PRIVATE_KEY` | Firebase コンソール > サービスアカウント > 秘密鍵生成 |
+| backend | `DATABASE_URL` `SHADOW_DATABASE_URL` | `docker-compose.yml` のデフォルト値を参照 |
+| frontend | `NEXT_PUBLIC_FIREBASE_*` | Firebase コンソール > ウェブアプリ |
+| frontend | `NEXT_PUBLIC_API_BASE_URL` | dev: `http://localhost:3001` |
+
 ## アプリケーション概要
 
 「クエスト掲示板」は社内向けのタスク投稿・参加アプリ。
@@ -92,8 +107,31 @@ lint/format コマンドはすべて `node scripts/run-biome.cjs` 経由で呼�
 ## Git / Branch
 
 - issue 対応は原則 `git worktree` で分離。作業ブランチは 1 issue / 1 task ごとに切る。
+
+  ```bash
+  git worktree add .claude/worktrees/<name> -b <branch-name>
+  # 作業後
+  git worktree remove .claude/worktrees/<name>
+  ```
+
+- **ブランチ命名**: `feat/issue-<番号>-<概要>` / `fix/<概要>` / `docs/<概要>` / `chore/<概要>` / `refactor/<概要>`
 - **`main` への直接 push は pre-push フックでブロックされる。** feature ブランチから PR を出す。
 - push 前に upstream との差分と競合有無を確認する。
+
+## コミット規約
+
+- `Co-Authored-By` トレーラーを**絶対に付けない**（Vercel のデプロイが壊れるため）。
+- Claude が行ったコミットは本文に `(by Claude)` と明記する。
+
+  ```
+  fix: バグの説明
+
+  詳細説明（必要な場合）
+
+  (by Claude)
+  ```
+
+- コミット著者はリポジトリの `git config user.name` / `git config user.email` をそのまま使う。
 
 ## フックの責務
 

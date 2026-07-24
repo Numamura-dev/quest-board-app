@@ -123,7 +123,7 @@ describe("httpRequest", () => {
 describe("authenticatedHttpRequest", () => {
 	it("currentUser が null の場合に Error をスロー", async () => {
 		await expect(
-			authenticatedHttpRequest({ path: "/quests/admin/all" }),
+			authenticatedHttpRequest({ path: "/quests" }),
 		).rejects.toThrow("User not authenticated");
 	});
 });

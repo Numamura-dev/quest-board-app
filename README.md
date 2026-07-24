@@ -2,121 +2,6 @@
 
 このプロジェクトは、モノレポ構成（frontend / backend / docs）で構築されたクエスト投稿・参加アプリです。
 
-## プロダクト概要
-
-クエスト掲示板は、ユーザーがクエストを投稿し、参加し、レビューできるアプリです。
-
-主なユースケース:
-
-- クエスト一覧の閲覧
-- クエスト詳細の確認
-- クエストの作成、編集、削除
-- クエストへの参加
-- レビュー投稿
-- マイページでの自分の活動確認
-- 管理者によるユーザー管理
-
-主要なデータフロー:
-
-```text
-ブラウザ
-  -> apps/frontend (Next.js)
-  -> apps/backend (Express API)
-  -> Prisma
-  -> MySQL
-
-認証:
-Firebase Authentication
-  -> frontend でログイン状態を管理
-  -> backend でトークンを検証
-```
-
-## リポジトリ全体像
-
-AI エージェントはまず次の単位でリポジトリを見ると全体像を把握しやすいです。
-
-```text
-repo
-├─ apps
-│  ├─ frontend   # UI、画面、hooks、API client
-│  ├─ backend    # API、service、Prisma、認証
-│  ├─ docs       # 開発ドキュメントサイト
-│  └─ e2e        # Playwright E2E テスト
-<<<<<<< HEAD
-├─ docs          # AI / 開発運用の正本ドキュメント
-├─ prompt        # 補助テンプレート
-├─ AGENTS.md     # AI 共通ルールの正本
-├─ CLAUDE.md     # 互換用の案内
-└─ README.md     # セットアップと repo 全体像
-=======
-├─ packages
-│  └─ types      # 共有型
-├─ docs          # AI / 開発運用の正本ドキュメント
-├─ prompt        # エージェント用テンプレート
-├─ AGENTS.md     # AI 共通ルール
-└─ README.md     # セットアップと全体像
->>>>>>> origin/main
-```
-
-## 変更箇所の当たり方
-
-変更内容ごとの主な確認先:
-
-| 変更内容 | 主な確認先 |
-|--------|------|
-| 画面、導線、表示 | `apps/frontend/src/app`, `apps/frontend/src/components` |
-| API 呼び出し | `apps/frontend/src/services` |
-| 認証 | `apps/frontend/src/hooks`, `apps/frontend/src/services/firebase.ts`, `apps/backend/src/middlewares/auth.middleware.ts` |
-| API 追加、修正 | `apps/backend/src/routes`, `apps/backend/src/controllers`, `apps/backend/src/services` |
-| DB 変更 | `apps/backend/prisma/schema.prisma`, `apps/backend/src/dataAccessor` |
-| テスト | `apps/frontend/src/__tests__`, `apps/backend/src/__tests__`, `apps/e2e/tests` |
-| ルール、設計 | `AGENTS.md`, `docs/architecture.md`, `docs/ai-execution.md` |
-
-<<<<<<< HEAD
-## AI 向けドキュメント導線
-
-AI が最初に読むべき文書セットは次の 5 つです。
-=======
-## AI向けドキュメント導線
-
-AIエージェント向けの正本は以下です。
->>>>>>> origin/main
-
-1. `README.md`
-2. `AGENTS.md`
-3. `docs/architecture.md`
-4. `docs/ai-execution.md`
-5. `prompt/agent.md`
-<<<<<<< HEAD
-6. 関連コード / 関連テスト
-=======
-6. 関連コード / テスト
->>>>>>> origin/main
-
-役割は次のとおりです。
-
-- `README.md`: セットアップ、開発コマンド、リポジトリ全体像
-<<<<<<< HEAD
-- `AGENTS.md`: AI エージェント共通ルールの正本
-- `docs/architecture.md`: repo 構造、レイヤー責務、変更判断の基準
-- `docs/ai-execution.md`: 調査、実装、検証、報告の進め方
-- `prompt/agent.md`: 他エージェントに渡す短い実行テンプレート
-
-補助テンプレートは source-of-truth ではありません。
-
-- `prompt/create_issue.md`: 改善 issue を新規起票するときの補助テンプレート
-- `prompt/modify_issue.md`: 既存 issue を整理、修正するときの補助テンプレート
-- `CLAUDE.md`: `AGENTS.md` への互換エントリ
-=======
-- `AGENTS.md`: AIエージェント共通ルール
-- `docs/architecture.md`: 実装対象の構造、責務、変更時の判断基準
-- `docs/ai-execution.md`: AIの調査、実装、検証フロー
-- `prompt/agent.md`: 他エージェントにも渡せる実行テンプレート
-- `prompt/create_issue.md`: 改善 issue を新規起票するときの補助プロンプト
-- `prompt/modify_issue.md`: 既存 issue を整理、修正するときの補助プロンプト
-- `ai-docs-refactor-prompt.md`: AI 向け docs 自体を見直すときの補助プロンプト
->>>>>>> origin/main
-
 ---
 
 ## 技術スタック
@@ -153,7 +38,7 @@ npm install -g pnpm
 ### 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/Numamura-dev/quest-board-app.git
+git clone https://github.com/natsumi-a98/quest-board-app.git
 cd quest-board-app
 ```
 
@@ -191,6 +76,7 @@ cp apps/backend/.env.local.example apps/backend/.env.local
 ```
 
 `apps/backend/.env.local` を開き、各項目を設定してください。
+
 ```env
 # Firebase Admin SDK（Firebase コンソール > プロジェクトの設定 > サービスアカウント から取得）
 FIREBASE_PROJECT_ID=your-project-id
@@ -283,7 +169,6 @@ pnpm dev:docs
 | `pnpm build` | 全サービスをビルド |
 | `pnpm lint` | Biome でコードをチェック |
 | `pnpm lint:fix` | Biome で自動修正 |
-| `pnpm openapi:diff-to-zod -- --base <base-openapi.json> --head <head-openapi.json> [--out <output.ts>]` | OpenAPI 差分から zod schema の叩き台を生成 |
 | `pnpm db:generate` | Prisma クライアントを生成 |
 | `pnpm db:push` | スキーマをDBに反映 |
 | `pnpm db:studio` | Prisma Studio（DB GUI）を起動 |
@@ -300,6 +185,18 @@ pnpm dev:docs
 
 ---
 
+## ドキュメントサイト
+
+プロジェクトの設計資料・規約は VitePress サイトとして `apps/docs/` にまとまっています。
+
+```bash
+pnpm dev:docs   # http://localhost:5173 で確認
+```
+
+主なコンテンツ: スタイルガイド / コーディング規約 / API 一覧 / ディレクトリ構成（FE・BE）/ 要件定義書 / テーブル定義書 / レビュー規約 / ログ設計書
+
+---
+
 ## API ドキュメント
 
 バックエンド起動後、以下で OpenAPI を確認できます。
@@ -308,21 +205,6 @@ pnpm dev:docs
 - OpenAPI JSON: `http://localhost:3001/api/openapi.json`
 
 現在の request schema は backend の `zod` を source of truth とし、OpenAPI ドキュメントも同じ schema から生成します。新しい API を追加する場合は、controller に手書きの `if` を足すのではなく、`apps/backend/src/schemas/api.ts` に schema を追加して `validateRequest` から利用してください。
-
-API path は REST の原則に沿って設計します。動詞を path に埋め込むより、resource と HTTP method で意味を表現してください。
-
-例:
-- `POST /api/users/create` ではなく `POST /api/users`
-- `GET /api/users/all` ではなく `GET /api/users`
-- `POST /api/quests/:questId/join` ではなく `POST /api/quests/:questId/participants`
-- `GET /api/reviews/quest/:questId` ではなく `GET /api/quests/:questId/reviews`
-- `POST /api/quests/:id/restore` のような状態遷移も、可能なら `restorations` `activations` のような resource 名で表現する
-
-既存 OpenAPI の差分から zod schema の叩き台を作る場合は、次のコマンドを使います。
-
-```bash
-pnpm openapi:diff-to-zod -- --base <base-openapi.json> --head <head-openapi.json> [--out <output.ts>]
-```
 
 VS Code では `.vscode/extensions.json` に OpenAPI 向けの推奨拡張を追加しています。workspace を開くと推奨が表示されます。
 

@@ -52,9 +52,19 @@ prisma/migrations/
 *.db-journal
 
 # Mac/Windows system files
-.DS_Store
-docs/.DS_Store
+**/.DS_Store
 Thumbs.db
 
 # VSCode
 .vscode/
+
+# E2E test outputs
+playwright-report/
+test-results/
+
+# Git worktrees (local working directories)
+.worktrees/
+.codex/
+
+# Claude Code local configuration
+.claude/

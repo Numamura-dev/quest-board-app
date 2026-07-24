@@ -41,7 +41,9 @@ describe("ErrorBoundary", () => {
 		expect(
 			screen.getByText("予期しないエラーが発生しました"),
 		).toBeInTheDocument();
-		expect(screen.getByText("テストエラーメッセージ")).toBeInTheDocument();
+		expect(
+			screen.getByText("問題が解決しない場合は管理者にお問い合わせください。"),
+		).toBeInTheDocument();
 		expect(
 			screen.getByRole("button", { name: "再読み込み" }),
 		).toBeInTheDocument();

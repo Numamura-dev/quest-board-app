@@ -15,8 +15,11 @@ import usersRouter from "./routes/users";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// reverse proxy / LB 配下で req.ip を正しく解決するために 1 ホップ分を信頼する。
-app.set("trust proxy", 1);
+// TRUST_PROXY 環境変数で制御する（Vercel / reverse proxy 配下では "1" を設定）。
+// 直接公開環境では未設定のままにすること。設定するとX-Forwarded-Forの偽装でrateLimit回避が可能になる。
+if (process.env.TRUST_PROXY) {
+	app.set("trust proxy", Number(process.env.TRUST_PROXY) || 1);
+}
 
 const frontendBaseUrl =
 	process.env.FRONTEND_BASE_URL || "http://localhost:3000";

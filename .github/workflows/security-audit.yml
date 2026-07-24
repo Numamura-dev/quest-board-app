@@ -40,16 +40,28 @@ jobs:
             echo "vulnerable=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create issue on vulnerability found
+      - name: Create or comment issue on vulnerability found
         if: steps.audit.outputs.vulnerable == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           AUDIT_RESULT=$(cat audit-result.txt)
           DATE=$(date '+%Y-%m-%d')
-          gh issue create \
-            --title "[Security] 依存パッケージの脆弱性が検出されました (${DATE})" \
-            --body "## 脆弱性スキャン結果
+          # 同一ラベルの open issue が既に存在する場合はコメントを追加して重複作成を防ぐ
+          EXISTING=$(gh issue list --label "security" --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" \
+              --body "## 再スキャン結果 (${DATE})
+
+          \`\`\`
+          ${AUDIT_RESULT}
+          \`\`\`
+
+          _このコメントはGitHub Actionsによって自動追加されました。_"
+          else
+            gh issue create \
+              --title "[Security] 依存パッケージの脆弱性が検出されました (${DATE})" \
+              --body "## 脆弱性スキャン結果
 
           定期スキャン (毎週月曜) で Critical / High の脆弱性が検出されました。
 
@@ -62,5 +74,6 @@ jobs:
           - 手動での対応が必要な場合は、該当パッケージのバージョンを更新する
 
           _このissueはGitHub Actionsによって自動生成されました。_" \
-            --label "security" \
-            || true
+              --label "security" \
+              || true
+          fi

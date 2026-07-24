@@ -106,7 +106,7 @@ export async function cleanupUnusedTagsService(): Promise<{
   const deletedQuestsWithTags = await prisma.quest.findMany({
     where: {
       deleted_at: { not: null },
-      NOT: [{ tags: Prisma.DbNull }],
+      NOT: [{ tags: { equals: Prisma.DbNull } }],
     },
     select: { id: true, tags: true },
   });

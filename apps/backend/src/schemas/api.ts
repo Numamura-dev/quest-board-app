@@ -228,7 +228,6 @@ export const ReviewSchema = z
 
 export const ReviewCreateBodySchema = z
 	.object({
-		reviewer_id: z.coerce.number().int().positive(),
 		rating: z.coerce.number().int().min(1).max(5),
 		comment: z.string().optional(),
 	})

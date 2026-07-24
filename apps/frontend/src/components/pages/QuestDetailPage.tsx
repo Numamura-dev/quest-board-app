@@ -186,7 +186,6 @@ const QuestDetailPage: React.FC<QuestDetailPageProps> = ({
 
       // APIにレビューを投稿
       const response = await reviewService.createReview(questId, {
-        reviewer_id: currentUserId,
         rating: newReview.score,
         comment: newReview.comment,
       });

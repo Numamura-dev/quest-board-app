@@ -1,9 +1,9 @@
-import {
-  ReviewDataAccessor,
-  CreateReviewData,
-  UpdateReviewData,
-} from "../dataAccessor/dbAccessor";
 import { logger } from "../config/logger";
+import {
+	type CreateReviewData,
+	ReviewDataAccessor,
+	type UpdateReviewData,
+} from "../dataAccessor/dbAccessor";
 
 const reviewDataAccessor = new ReviewDataAccessor();
 
@@ -13,8 +13,18 @@ const reviewDataAccessor = new ReviewDataAccessor();
  * @returns レビュー一覧
  */
 export const getReviewsByQuestIdService = async (questId: number) => {
-  const reviews = await reviewDataAccessor.findByQuestId(questId);
-  return reviews;
+	const reviews = await reviewDataAccessor.findByQuestId(questId);
+	return reviews;
+};
+
+/**
+ * レビュー ID から 1 件取得する。
+ * @param reviewId - 対象レビューの ID
+ * @returns レビュー情報。見つからない場合は `null`
+ */
+export const getReviewByIdService = async (reviewId: number) => {
+	const review = await reviewDataAccessor.findById(reviewId);
+	return review;
 };
 
 /**
@@ -23,23 +33,23 @@ export const getReviewsByQuestIdService = async (questId: number) => {
  * @returns 作成後のレビュー情報
  */
 export const createReviewService = async (data: CreateReviewData) => {
-  try {
-    // 既存のレビューをチェック（1アカウント1投稿の制限）
-    const existingReview = await reviewDataAccessor.findByUserAndQuest(
-      data.reviewer_id,
-      data.questId
-    );
+	try {
+		// 既存のレビューをチェック（1アカウント1投稿の制限）
+		const existingReview = await reviewDataAccessor.findByUserAndQuest(
+			data.reviewer_id,
+			data.questId,
+		);
 
-    if (existingReview) {
-      throw new Error("このクエストには既にレビューを投稿済みです。");
-    }
+		if (existingReview) {
+			throw new Error("このクエストには既にレビューを投稿済みです。");
+		}
 
-    const review = await reviewDataAccessor.create(data);
-    return review;
-  } catch (error) {
-    logger.error({ err: error, reviewData: data }, "レビュー作成エラー");
-    throw error;
-  }
+		const review = await reviewDataAccessor.create(data);
+		return review;
+	} catch (error) {
+		logger.error({ err: error, reviewData: data }, "レビュー作成エラー");
+		throw error;
+	}
 };
 
 /**
@@ -49,11 +59,11 @@ export const createReviewService = async (data: CreateReviewData) => {
  * @returns 更新後のレビュー情報
  */
 export const updateReviewService = async (
-  reviewId: number,
-  data: UpdateReviewData
+	reviewId: number,
+	data: UpdateReviewData,
 ) => {
-  const review = await reviewDataAccessor.update(reviewId, data);
-  return review;
+	const review = await reviewDataAccessor.update(reviewId, data);
+	return review;
 };
 
 /**
@@ -62,7 +72,7 @@ export const updateReviewService = async (
  * @returns 削除完了後の Promise
  */
 export const deleteReviewService = async (reviewId: number) => {
-  await reviewDataAccessor.delete(reviewId);
+	await reviewDataAccessor.delete(reviewId);
 };
 
 /**
@@ -72,14 +82,14 @@ export const deleteReviewService = async (reviewId: number) => {
  * @returns 投稿済みなら `true`
  */
 export const checkUserReviewExistsService = async (
-  userId: number,
-  questId: number
+	userId: number,
+	questId: number,
 ) => {
-  try {
-    const review = await reviewDataAccessor.findByUserAndQuest(userId, questId);
-    return !!review;
-  } catch (error) {
-    logger.error({ err: error, userId, questId }, "レビュー存在チェックエラー");
-    throw error;
-  }
+	try {
+		const review = await reviewDataAccessor.findByUserAndQuest(userId, questId);
+		return !!review;
+	} catch (error) {
+		logger.error({ err: error, userId, questId }, "レビュー存在チェックエラー");
+		throw error;
+	}
 };

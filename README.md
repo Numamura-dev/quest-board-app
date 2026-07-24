@@ -1,10 +1,23 @@
 # クエスト掲示板 開発ガイド
 
-このプロジェクトは、モノレポ構成（frontend / backend / docs）で構築されたクエスト投稿・参加アプリです。
+クエスト掲示板は、ユーザーがクエストを投稿し、参加し、レビューできる Web アプリです。モノレポ構成で、Next.js フロントエンド、Express API、Prisma + MySQL、VitePress ドキュメントサイトを管理しています。
+
+## 目次
+
+- [プロダクト概要](#プロダクト概要)
+- [リポジトリ構成](#リポジトリ構成)
+- [前提条件](#前提条件)
+- [クイックスタート](#クイックスタート)
+- [環境変数](#環境変数)
+- [データベース](#データベース)
+- [起動方法](#起動方法)
+- [検証コマンド](#検証コマンド)
+- [E2E テスト](#e2e-テスト)
+- [ドキュメントサイト](#ドキュメントサイト)
+- [API ドキュメント](#api-ドキュメント)
+- [トラブルシューティング](#トラブルシューティング)
 
 ## プロダクト概要
-
-クエスト掲示板は、ユーザーがクエストを投稿し、参加し、レビューできるアプリです。
 
 主なユースケース:
 
@@ -28,35 +41,31 @@
 認証:
 Firebase Authentication
   -> frontend でログイン状態を管理
-  -> backend でトークンを検証
+  -> backend で Firebase ID token を検証
 ```
 
-## リポジトリ全体像
-
-AI エージェントはまず次の単位でリポジトリを見ると全体像を把握しやすいです。
+## リポジトリ構成
 
 ```text
 repo
 ├─ apps
 │  ├─ frontend   # UI、画面、hooks、API client
 │  ├─ backend    # API、service、Prisma、認証
-│  ├─ docs       # 開発ドキュメントサイト
+│  ├─ docs       # VitePress ドキュメントサイト
 │  └─ e2e        # Playwright E2E テスト
 ├─ packages
-│  └─ types      # 共有型
+│  └─ types      # frontend / backend 共有型
 ├─ docs          # AI / 開発運用の正本ドキュメント
 ├─ prompt        # 補助テンプレート
 ├─ AGENTS.md     # AI 共通ルールの正本
-├─ CLAUDE.md     # 互換用の案内
+├─ CLAUDE.md     # Claude Code 向け互換エントリ
 └─ README.md     # セットアップと全体像
 ```
-
-## 変更箇所の当たり方
 
 変更内容ごとの主な確認先:
 
 | 変更内容 | 主な確認先 |
-|--------|------|
+| --- | --- |
 | 画面、導線、表示 | `apps/frontend/src/app`, `apps/frontend/src/components` |
 | API 呼び出し | `apps/frontend/src/services` |
 | 認証 | `apps/frontend/src/hooks`, `apps/frontend/src/services/firebase.ts`, `apps/backend/src/middlewares/auth.middleware.ts` |
@@ -65,115 +74,104 @@ repo
 | テスト | `apps/frontend/src/__tests__`, `apps/backend/src/__tests__`, `apps/e2e/tests` |
 | ルール、設計 | `AGENTS.md`, `docs/architecture.md`, `docs/ai-execution.md` |
 
-## AI向けドキュメント導線
-
-AI が最初に読むべき文書セットは次の 6 つです。
-
-1. `README.md`
-2. `AGENTS.md`
-3. `docs/architecture.md`
-4. `docs/ai-execution.md`
-5. `prompt/agent.md`
-6. 関連コード / 関連テスト
-
-役割は次のとおりです。
-
-- `README.md`: セットアップ、開発コマンド、リポジトリ全体像
-- `AGENTS.md`: AI エージェント共通ルールの正本
-- `docs/architecture.md`: repo 構造、レイヤー責務、変更判断の基準
-- `docs/ai-execution.md`: 調査、実装、検証、報告の進め方
-- `prompt/agent.md`: 他エージェントに渡す短い実行テンプレート
-
-補助テンプレートは source-of-truth ではありません。
-
-- `prompt/create_issue.md`: 改善 issue を新規起票するときの補助テンプレート
-- `prompt/modify_issue.md`: 既存 issue を整理、修正するときの補助テンプレート
-- `CLAUDE.md`: `AGENTS.md` への互換エントリ
-
----
-
-## 技術スタック
-
-| レイヤー | 技術 |
-|--------|------|
-| フロントエンド | Next.js 15, React 19, Tailwind CSS |
-| バックエンド | Express.js, TypeScript |
-| 認証 | Firebase Authentication |
-| データベース | MySQL 8.0 (Docker) + Prisma ORM |
-| パッケージ管理 | pnpm (Workspace) |
-| Linter | Biome |
-
----
+AI エージェントが最初に読む文書は `README.md`、`AGENTS.md`、`docs/architecture.md`、`docs/ai-execution.md`、`prompt/agent.md`、関連コード / 関連テストです。`CLAUDE.md` は Claude Code 向けの互換エントリです。
 
 ## 前提条件
 
 以下をインストールしてください。
 
-- **Node.js** v22.x（`node --version` で確認）
-- **pnpm** v10.x（`pnpm --version` で確認）
-- **Docker** / **Docker Compose**（MySQLの起動に使用）
-- **Firebase プロジェクト**（認証機能に使用）
+- Node.js v22.x
+- pnpm v10.x
+- Docker / Docker Compose
+- Firebase プロジェクト
+
+確認コマンド:
 
 ```bash
-# pnpm が未インストールの場合
+node --version
+pnpm --version
+docker --version
+docker compose version
+```
+
+pnpm が未インストールの場合:
+
+```bash
 npm install -g pnpm
 ```
 
----
+## クイックスタート
 
-## セットアップ手順
-
-### 1. リポジトリをクローン
+初回は次の順で進めると、依存関係、DB、アプリ起動まで確認できます。
 
 ```bash
-git clone https://github.com/natsumi-a98/quest-board-app.git
+git clone https://github.com/Numamura-dev/quest-board-app.git
 cd quest-board-app
-```
 
-### 2. 依存パッケージをインストール
-
-```bash
 pnpm install
+
+cp apps/frontend/.env.local.example apps/frontend/.env.local
+cp apps/backend/.env.local.example apps/backend/.env.local
+
+docker compose up -d
+pnpm db:generate
+pnpm db:push
+pnpm --filter backend seed
+
+pnpm dev
 ```
 
-### 3. 環境変数を設定
+起動後の確認先:
 
-#### フロントエンド
+| サービス | URL |
+| --- | --- |
+| フロントエンド | `http://localhost:3000` |
+| バックエンド API | `http://localhost:3001/api/openapi.json` |
+| Swagger UI | `http://localhost:3001/api/docs` |
+| MySQL | `localhost:3306` |
+
+`pnpm dev` は workspace 内の `dev` script を持つ package を並列起動します。frontend / backend は起動対象です。docs を確認したい場合は、別途 `pnpm dev:docs` を起動して `http://localhost:5173` を開いてください。
+
+## 環境変数
+
+`.env` / `.env.local` などの実ファイルは Git 管理しません。実値を共有してしまった場合は、秘密情報のローテーションを検討してください。
+
+### フロントエンド
 
 ```bash
 cp apps/frontend/.env.local.example apps/frontend/.env.local
 ```
 
-`apps/frontend/.env.local` を開き、Firebase プロジェクトの設定値を入力してください。
+`apps/frontend/.env.local` に Firebase Web アプリの設定値を入れます。
 
 | 変数名 | 説明 |
-|--------|------|
+| --- | --- |
 | `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase コンソール > プロジェクトの設定 > ウェブアプリ |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | 同上 |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | 同上 |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | 同上 |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | 同上 |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | 同上 |
-| `NEXT_PUBLIC_API_BASE_URL` | バックエンドのURL（デフォルト: `http://localhost:3001`） |
-| `PORT` | フロントエンドのポート番号（デフォルト: `3000`） |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app ID |
+| `NEXT_PUBLIC_API_BASE_URL` | backend URL。ローカル既定値は `http://localhost:3001` |
+| `PORT` | frontend port。ローカル既定値は `3000` |
 
-#### バックエンド
+### バックエンド
 
 ```bash
 cp apps/backend/.env.local.example apps/backend/.env.local
 ```
 
-`apps/backend/.env.local` を開き、各項目を設定してください。
+`apps/backend/.env.local.example` は `docker-compose.yml` の既定値と揃っています。通常のローカル開発では、そのままコピーした DB 接続設定で動きます。
 
 ```env
-# Firebase Admin SDK（Firebase コンソール > プロジェクトの設定 > サービスアカウント から取得）
+# Firebase Admin SDK
 FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=your-client-email@your-project.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
 
-# Prisma / MySQL（docker-compose.yml のデフォルト値に合わせて設定）
+# Prisma / MySQL
 DATABASE_URL=mysql://app_user:app_password@localhost:3306/your_project_db
-SHADOW_DATABASE_URL=mysql://app_user:app_password@localhost:3306/your_project_shadow_db
+SHADOW_DATABASE_URL=mysql://root:rootpassword@localhost:3306/shadow_your_project_db
 MYSQL_ROOT_PASSWORD=rootpassword
 MYSQL_DATABASE=your_project_db
 MYSQL_USER=app_user
@@ -185,162 +183,207 @@ NODE_ENV=development
 FRONTEND_BASE_URL=http://localhost:3000
 ```
 
-#### E2E（任意）
+`SHADOW_DATABASE_URL` は Prisma が `db push` 時の差分検出に使う一時 DB です。shadow DB を自動作成できるよう、ローカルでは root ユーザーを使います。
 
-E2E テストを実行する場合のみ、example から `.env` を作成してください。
+Firebase 認証を含む動作確認には Firebase Admin SDK の値が必要です。未設定でも一部の build/test は進みますが、認証 API の実運用確認はできません。
+
+## データベース
+
+MySQL を起動します。
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+Prisma Client を生成し、schema を DB に反映します。
+
+```bash
+pnpm db:generate
+pnpm db:push
+```
+
+初期データが必要な場合:
+
+```bash
+pnpm --filter backend seed
+```
+
+migration を確認・適用する場合:
+
+```bash
+pnpm --filter backend prisma:migrate:deploy
+```
+
+ローカル開発の初回構築は `pnpm db:push` が簡単です。CI や本番相当の環境では、履歴管理された migration を使う方針に寄せてください。
+
+## 起動方法
+
+全体起動:
+
+```bash
+pnpm dev
+```
+
+個別起動:
+
+```bash
+pnpm dev:frontend
+pnpm dev:backend
+pnpm dev:docs
+```
+
+production build 後の backend 起動確認:
+
+```bash
+pnpm build
+PORT=3001 node apps/backend/dist/app.js
+```
+
+backend は `DATABASE_URL` が未設定だと起動時に停止します。`apps/backend/.env.local` を作成してから起動してください。
+
+## 検証コマンド
+
+CI の主要保証は frontend test、backend test、security audit、frontend/backend/docs build です。ローカルでは次を目安に確認してください。
+
+```bash
+pnpm db:generate
+pnpm --filter frontend test
+pnpm --filter backend test
+pnpm --filter backend typecheck
+pnpm build
+```
+
+共有型 package `@quest-board/types` は `dist` へ build してから frontend/backend が参照します。通常は frontend/backend の `pretest` / `prebuild` / `predev` が自動で `pnpm --filter @quest-board/types run build` を実行します。手動で確認する場合は次を使います。
+
+```bash
+pnpm build:types
+```
+
+Biome 関連:
+
+```bash
+pnpm format:check
+pnpm lint
+pnpm lint:fix
+pnpm precommit:biome
+```
+
+`pnpm lint` は repo 全体を対象にする重い静的チェックです。既存指摘が残っている場合は、今回差分の対象ファイルに絞った `pnpm exec biome check <files>` と CI 結果を併用して切り分けてください。
+
+## E2E テスト
+
+E2E を実行する場合のみ、環境変数を作成します。
 
 ```bash
 cp apps/e2e/.env.example apps/e2e/.env
 ```
 
 | 変数名 | 説明 |
-|--------|------|
-| `FRONTEND_BASE_URL` | Playwright が開くフロントエンド URL（デフォルト: `http://localhost:3000`） |
-| `API_BASE_URL` | API テスト用のバックエンド URL（デフォルト: `http://localhost:3001`） |
+| --- | --- |
+| `FRONTEND_BASE_URL` | Playwright が開く frontend URL。既定値は `http://localhost:3000` |
+| `API_BASE_URL` | API テスト用 backend URL。既定値は `http://localhost:3001` |
 
-> `.env` / `.env.local` などの実ファイルは Git 管理しない方針です。過去に実値を含むファイルを共有していた場合は、秘密情報のローテーションも検討してください。
+初回は Playwright browser をインストールします。
 
-> **Firebase Admin SDK の取得方法**
-> Firebase コンソール > プロジェクトの設定 > サービスアカウント > 「新しい秘密鍵の生成」
+```bash
+pnpm --filter e2e exec playwright install
+```
 
-### 4. MySQL を起動（Docker）
+E2E 実行前に DB、backend、frontend を起動してください。`pnpm dev` は起動し続けるため、E2E は別ターミナルで実行します。
 
 ```bash
 docker compose up -d
-```
-
-MySQL が起動したことを確認:
-
-```bash
-docker compose ps
-```
-
-### 5. データベースのセットアップ（Prisma）
-
-```bash
-# Prisma クライアントを生成
 pnpm db:generate
-
-# スキーマをデータベースに反映
 pnpm db:push
-
-# migration を適用する場合（任意）
-pnpm --filter backend prisma:migrate:deploy
-```
-
-`pnpm dev:backend` と backend の test は `apps/backend/.env.local` を基準に環境変数を読むため、repo root と `apps/backend` のどちらから実行しても同じ `DATABASE_URL` を参照できます。
-
----
-
-## アプリの起動
-
-### 全サービスを一括起動
-
-```bash
+pnpm --filter backend seed
 pnpm dev
 ```
 
-### 個別起動
+別ターミナル:
 
 ```bash
-# フロントエンドのみ（http://localhost:3000）
-pnpm dev:frontend
-
-# バックエンドのみ（http://localhost:3001）
-pnpm dev:backend
-
-# ドキュメントのみ
-pnpm dev:docs
+pnpm --filter e2e test
 ```
-
----
-
-## 利用可能なコマンド一覧
-
-| コマンド | 説明 |
-|--------|------|
-| `pnpm dev` | 全サービスを開発モードで起動 |
-| `pnpm build` | 全サービスをビルド |
-| `pnpm lint` | Biome でコードをチェック |
-| `pnpm lint:fix` | Biome で自動修正 |
-| `pnpm db:generate` | Prisma クライアントを生成 |
-| `pnpm db:push` | スキーマをDBに反映 |
-| `pnpm db:studio` | Prisma Studio（DB GUI）を起動 |
-| `pnpm --filter backend prisma:migrate:deploy` | backend の migration を適用 |
-
----
-
-## ポート一覧
-
-| サービス | ポート |
-|--------|------|
-| フロントエンド | 3000 |
-| バックエンド | 3001 |
-| MySQL | 3306 |
-
----
 
 ## ドキュメントサイト
 
-プロジェクトの設計資料・規約は VitePress サイトとして `apps/docs/` にまとまっています。
+VitePress サイトは `apps/docs/` にあります。
 
 ```bash
-pnpm dev:docs   # http://localhost:5173 で確認
+pnpm dev:docs
+pnpm build:docs
 ```
 
-主なコンテンツ: スタイルガイド / コーディング規約 / API 一覧 / ディレクトリ構成（FE・BE）/ 要件定義書 / テーブル定義書 / レビュー規約 / ログ設計書
-
----
+主なコンテンツ: スタイルガイド / コーディング規約 / API 一覧 / ディレクトリ構成 / 要件定義書 / テーブル定義書 / レビュー規約 / ログ設計書
 
 ## API ドキュメント
 
-バックエンド起動後、以下で OpenAPI を確認できます。
+backend 起動後に確認できます。
 
 - Swagger UI: `http://localhost:3001/api/docs`
 - OpenAPI JSON: `http://localhost:3001/api/openapi.json`
 
-現在の request schema は backend の `zod` を source of truth とし、OpenAPI ドキュメントも同じ schema から生成します。新しい API を追加する場合は、controller に手書きの `if` を足すのではなく、`apps/backend/src/schemas/api.ts` に schema を追加して `validateRequest` から利用してください。
-
-VS Code では `.vscode/extensions.json` に OpenAPI 向けの推奨拡張を追加しています。workspace を開くと推奨が表示されます。
-
----
+request schema は `apps/backend/src/schemas/api.ts` の Zod schema を source of truth とし、OpenAPI ドキュメントも同じ schema から生成します。新しい API を追加する場合は controller に手書き validation を足すのではなく、schema を追加して `validateRequest` から利用してください。
 
 ## Firebase のセットアップ
 
-1. [Firebase コンソール](https://console.firebase.google.com/) でプロジェクトを作成
-2. **Authentication** を有効化し、ログイン方法を設定（メール/パスワード など）
-3. **ウェブアプリ** を追加し、設定値を `apps/frontend/.env.local` に記入
-4. **サービスアカウント** の秘密鍵を生成し、`apps/backend/.env.local` に記入
+1. Firebase コンソールでプロジェクトを作成
+2. Authentication を有効化し、メール / パスワードなどのログイン方法を設定
+3. ウェブアプリを追加し、設定値を `apps/frontend/.env.local` に記入
+4. サービスアカウントの秘密鍵を生成し、`apps/backend/.env.local` に記入
 
----
-
-## 🗄 DB 操作
-
-```bash
-# Prisma Studio（GUIでDBを確認）
-pnpm db:studio
-
-# シードデータを投入
-pnpm --filter backend seed
-```
-
----
+Firebase Admin SDK の秘密鍵は Firebase コンソール > プロジェクトの設定 > サービスアカウント > 新しい秘密鍵の生成 から取得できます。
 
 ## トラブルシューティング
 
-**MySQL に接続できない場合**
+### MySQL に接続できない
+
 ```bash
-# コンテナの状態を確認
 docker compose ps
-# ログを確認
 docker compose logs mysql
 ```
 
-**Prisma のエラーが出る場合**
+`DATABASE_URL` が `docker-compose.yml` の `MYSQL_DATABASE` / `MYSQL_USER` / `MYSQL_PASSWORD` と一致しているか確認してください。
+
+### `pnpm db:push` で shadow DB 権限エラーが出る
+
+`apps/backend/.env.local` の `SHADOW_DATABASE_URL` を root ユーザーにしてください。
+
+```env
+SHADOW_DATABASE_URL=mysql://root:rootpassword@localhost:3306/shadow_your_project_db
+```
+
+### Prisma Client の型が見つからない
+
 ```bash
-# Prisma クライアントを再生成
 pnpm db:generate
 ```
 
-**ポートが使用中の場合**
+### `@quest-board/types` の entry が解決できない
+
+```bash
+pnpm build:types
+```
+
+通常は frontend/backend の test/build/dev 前に自動実行されます。clean checkout 直後に個別ツールを直接起動した場合は、手動で実行してください。
+
+### backend が `DATABASE_URL が未設定です` で起動しない
+
+`apps/backend/.env.local` を作成してください。
+
+```bash
+cp apps/backend/.env.local.example apps/backend/.env.local
+```
+
+### ポートが使用中
+
 `.env.local` の `PORT` を変更するか、競合しているプロセスを終了してください。
+
+### 最小 smoke test
+
+backend が起動している状態で OpenAPI JSON が 200 を返すことを確認します。
+
+```bash
+curl -i http://localhost:3001/api/openapi.json
+```

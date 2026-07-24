@@ -102,15 +102,18 @@ describe("createRateLimiter", () => {
     expect(typeof res._headers["X-RateLimit-Reset"]).toBe("number");
   });
 
-  it("X-Forwarded-For ヘッダーを IP として使用する", () => {
+  it("異なる IP のリクエストは独立してカウントされる", () => {
     const limiter = createRateLimiter({ windowMs: 60_000, max: 1 });
+    // Express が trust proxy 設定で x-forwarded-for から解決した req.ip を模倣する
     const req1 = mockRequest({
       headers: { "x-forwarded-for": "203.0.113.1, 10.0.0.1" },
+      ip: "203.0.113.1",
       socket: { remoteAddress: "10.0.0.1" },
       path: "/api/quests",
     } as unknown as Partial<Request>);
     const req2 = mockRequest({
       headers: { "x-forwarded-for": "203.0.113.2, 10.0.0.1" },
+      ip: "203.0.113.2",
       socket: { remoteAddress: "10.0.0.1" },
       path: "/api/quests",
     } as unknown as Partial<Request>);

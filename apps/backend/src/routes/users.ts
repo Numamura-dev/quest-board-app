@@ -1,21 +1,19 @@
 import express from "express";
 import {
-  findUserByNameOrEmail,
-  getUserIdByNameOrEmail,
+  getUsers,
   createUser,
   getCurrentUser,
-  getAllUsers,
   deleteUser,
 } from "../controllers/userController";
+import { checkUserReviewExists } from "../controllers/reviewController";
 import { authMiddleware, requireAdmin } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
-router.post("/find", authMiddleware, findUserByNameOrEmail); // POST /users/find
-router.post("/get-id", authMiddleware, getUserIdByNameOrEmail); // POST /users/get-id
-router.post("/create", authMiddleware, createUser); // POST /users/create
+router.get("/", authMiddleware, getUsers); // GET /users
+router.post("/", authMiddleware, createUser); // POST /users
 router.get("/me", authMiddleware, getCurrentUser); // GET /users/me
-router.get("/all", authMiddleware, requireAdmin, getAllUsers); // GET /users/all
+router.get("/:userId/reviews", checkUserReviewExists); // GET /users/:userId/reviews?questId=...
 router.delete("/:id", authMiddleware, requireAdmin, deleteUser); // DELETE /users/:id (管理者用)
 
 export default router;

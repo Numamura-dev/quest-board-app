@@ -15,6 +15,40 @@ interface QuestDetailPageProps {
   action?: string;
 }
 
+const QuestDetailSkeleton = () => (
+  <div className="max-w-4xl mx-auto px-4 py-8 space-y-8 animate-pulse">
+    <div className="rounded-xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 p-6 shadow-lg">
+      <div className="mb-5 h-6 w-24 rounded-full bg-amber-200" />
+      <div className="space-y-3">
+        <div className="h-8 w-2/3 rounded bg-amber-300/70" />
+        <div className="h-4 w-full rounded bg-amber-200/80" />
+        <div className="h-4 w-5/6 rounded bg-amber-200/80" />
+      </div>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <div className="h-7 w-24 rounded-full bg-amber-200" />
+        <div className="h-7 w-16 rounded-full bg-amber-200" />
+        <div className="h-7 w-20 rounded-full bg-amber-200" />
+      </div>
+    </div>
+
+    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mb-6 h-7 w-48 rounded bg-slate-200" />
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="space-y-3 rounded-2xl border border-slate-100 p-4">
+            <div className="flex items-center justify-between">
+              <div className="h-5 w-32 rounded bg-slate-200" />
+              <div className="h-4 w-20 rounded bg-slate-100" />
+            </div>
+            <div className="h-4 w-full rounded bg-slate-100" />
+            <div className="h-4 w-4/5 rounded bg-slate-100" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 const QuestDetailPage: React.FC<QuestDetailPageProps> = ({
   questId,
   action,
@@ -233,14 +267,7 @@ const QuestDetailPage: React.FC<QuestDetailPageProps> = ({
 
   // ローディング状態
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">クエスト情報を読み込み中...</p>
-        </div>
-      </div>
-    );
+    return <QuestDetailSkeleton />;
   }
 
   // エラー状態

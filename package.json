@@ -1,39 +1,40 @@
 {
-  "name": "quest-board-app",
-  "private": true,
-  "scripts": {
-    "dev": "pnpm --parallel run dev",
-    "build": "pnpm run build:docs && pnpm run build:frontend && pnpm run build:backend",
-    "build:docs": "pnpm --filter docs run build",
-    "build:frontend": "pnpm --filter frontend run build",
-    "build:backend": "pnpm --filter backend run build",
-    "dev:docs": "pnpm --filter docs run dev",
-    "dev:frontend": "pnpm --filter frontend run dev",
-    "dev:backend": "pnpm --filter backend run dev",
-    "prepare": "husky",
-    "format": "biome format --write .",
-    "format:check": "biome format .",
-    "lint": "biome check .",
-    "lint:biome": "biome lint .",
-    "lint:fix": "biome check --apply .",
-    "precommit:biome": "biome format --write --staged --files-ignore-unknown=true --no-errors-on-unmatched && biome lint --staged --files-ignore-unknown=true --no-errors-on-unmatched",
-    "db:generate": "prisma generate --schema apps/backend/prisma/schema.prisma",
-    "db:push": "prisma db push --schema apps/backend/prisma/schema.prisma",
-    "db:studio": "prisma studio --schema apps/backend/prisma/schema.prisma"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.0.0",
-    "husky": "^9.1.7",
-    "prisma": "^5.0.0"
-  },
-  "dependencies": {
-    "@prisma/client": "^5.0.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "minimatch@<3.1.4": ">=3.1.4",
-      "rollup@>=4.0.0 <4.59.0": "4.59.0",
-      "preact@>=10.27.0 <10.27.3": "10.27.3"
-    }
-  }
+	"name": "quest-board-app",
+	"private": true,
+	"scripts": {
+		"dev": "pnpm --parallel run dev",
+		"build": "pnpm run build:docs && pnpm run build:frontend && pnpm run build:backend",
+		"openapi:diff-to-zod": "pnpm --filter backend openapi:diff-to-zod",
+		"build:docs": "pnpm --filter docs run build",
+		"build:frontend": "pnpm --filter frontend run build",
+		"build:backend": "pnpm --filter backend run build",
+		"dev:docs": "pnpm --filter docs run dev",
+		"dev:frontend": "pnpm --filter frontend run dev",
+		"dev:backend": "pnpm --filter backend run dev",
+		"prepare": "husky",
+		"format": "node scripts/run-biome.cjs format --write .",
+		"format:check": "node scripts/run-biome.cjs format .",
+		"lint": "node scripts/run-biome.cjs check .",
+		"lint:biome": "node scripts/run-biome.cjs lint .",
+		"lint:fix": "node scripts/run-biome.cjs check --apply .",
+		"precommit:biome": "node scripts/run-biome.cjs format --write --staged --files-ignore-unknown=true --no-errors-on-unmatched && node scripts/run-biome.cjs lint --staged --files-ignore-unknown=true --no-errors-on-unmatched",
+		"db:generate": "prisma generate --schema apps/backend/prisma/schema.prisma",
+		"db:push": "prisma db push --schema apps/backend/prisma/schema.prisma",
+		"db:studio": "prisma studio --schema apps/backend/prisma/schema.prisma"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.0.0",
+		"husky": "^9.1.7",
+		"prisma": "^5.0.0"
+	},
+	"dependencies": {
+		"@prisma/client": "^5.0.0"
+	},
+	"pnpm": {
+		"overrides": {
+			"minimatch@<3.1.4": ">=3.1.4",
+			"rollup@>=4.0.0 <4.59.0": "4.59.0",
+			"preact@>=10.27.0 <10.27.3": "10.27.3"
+		}
+	}
 }

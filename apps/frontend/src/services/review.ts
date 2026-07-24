@@ -32,7 +32,7 @@ export const reviewService = {
    * クエストIDでレビュー一覧を取得
    */
   getReviewsByQuestId: async (questId: string): Promise<ReviewResponse[]> => {
-    return apiClient.get<ReviewResponse[]>(`/reviews/quest/${questId}`);
+    return apiClient.get<ReviewResponse[]>(`/quests/${questId}/reviews`);
   },
 
   /**
@@ -43,7 +43,7 @@ export const reviewService = {
     data: CreateReviewRequest
   ): Promise<ReviewResponse> => {
     return apiClient.post<ReviewResponse, CreateReviewRequest>(
-      `/reviews/quest/${questId}`,
+      `/quests/${questId}/reviews`,
       data
     );
   },
@@ -76,7 +76,8 @@ export const reviewService = {
     questId: string
   ): Promise<{ exists: boolean }> => {
     return apiClient.get<{ exists: boolean }>(
-      `/reviews/check/${userId}/${questId}`
+      `/users/${userId}/reviews`,
+      { questId }
     );
   },
 };

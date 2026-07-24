@@ -1,8 +1,16 @@
 import { MypageDataAccessor } from "../dataAccessor/dbAccessor";
 
+/**
+ * マイページ表示用にユーザー関連データを整形するサービス。
+ */
 export class MypageService {
   constructor(private readonly mypageDataAccessor = new MypageDataAccessor()) {}
 
+  /**
+   * マイページの参加中・達成済み・応募済みクエストを取得する。
+   * @param userId - 対象ユーザー ID
+   * @returns マイページ表示用に整形したクエスト一覧
+   */
   async getUserEntries(userId: number) {
     const participating =
       await this.mypageDataAccessor.fetchUserParticipatingQuests(userId);
@@ -31,6 +39,11 @@ export class MypageService {
     };
   }
 
+  /**
+   * マイページ表示用のユーザープロフィールを取得する。
+   * @param userId - 対象ユーザー ID
+   * @returns プロフィール情報。見つからない場合は `null`
+   */
   async getUserProfile(userId: number) {
     const user = await this.mypageDataAccessor.fetchUserById(userId);
     if (!user) return null;
@@ -43,6 +56,11 @@ export class MypageService {
     };
   }
 
+  /**
+   * マイページに表示する通知一覧を取得する。
+   * @param userId - 対象ユーザー ID
+   * @returns 表示用に整形した通知一覧
+   */
   async getUserNotifications(userId: number) {
     const notifications =
       await this.mypageDataAccessor.fetchUserNotifications(userId);
@@ -56,4 +74,7 @@ export class MypageService {
   }
 }
 
+/**
+ * マイページ機能で共有するサービスインスタンス。
+ */
 export const mypageService = new MypageService();

@@ -7,13 +7,21 @@ import { logger } from "../config/logger";
 
 const reviewDataAccessor = new ReviewDataAccessor();
 
-// クエストIDでレビュー一覧取得
+/**
+ * クエストに紐づくレビュー一覧を取得する。
+ * @param questId - 対象クエストの ID
+ * @returns レビュー一覧
+ */
 export const getReviewsByQuestIdService = async (questId: number) => {
   const reviews = await reviewDataAccessor.findByQuestId(questId);
   return reviews;
 };
 
-// レビュー作成
+/**
+ * レビューを新規作成する。
+ * @param data - 作成するレビュー情報
+ * @returns 作成後のレビュー情報
+ */
 export const createReviewService = async (data: CreateReviewData) => {
   try {
     // 既存のレビューをチェック（1アカウント1投稿の制限）
@@ -34,7 +42,12 @@ export const createReviewService = async (data: CreateReviewData) => {
   }
 };
 
-// レビュー更新
+/**
+ * 既存レビューを更新する。
+ * @param reviewId - 更新対象のレビュー ID
+ * @param data - 更新内容
+ * @returns 更新後のレビュー情報
+ */
 export const updateReviewService = async (
   reviewId: number,
   data: UpdateReviewData
@@ -43,12 +56,21 @@ export const updateReviewService = async (
   return review;
 };
 
-// レビュー削除
+/**
+ * レビューを削除する。
+ * @param reviewId - 削除対象のレビュー ID
+ * @returns 削除完了後の Promise
+ */
 export const deleteReviewService = async (reviewId: number) => {
   await reviewDataAccessor.delete(reviewId);
 };
 
-// ユーザーが特定のクエストにレビューを投稿済みかチェック
+/**
+ * ユーザーが対象クエストへレビュー済みかを判定する。
+ * @param userId - 判定対象のユーザー ID
+ * @param questId - 判定対象のクエスト ID
+ * @returns 投稿済みなら `true`
+ */
 export const checkUserReviewExistsService = async (
   userId: number,
   questId: number

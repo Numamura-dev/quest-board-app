@@ -3,6 +3,10 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = global as unknown as { prisma?: PrismaClient };
 
+/**
+ * Prisma Client の共有インスタンス。
+ * 開発時はホットリロードによる多重生成を避けるため global 経由で再利用する。
+ */
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({

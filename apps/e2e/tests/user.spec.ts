@@ -51,33 +51,33 @@ test.describe("User Management API E2E Test", () => {
     await apiContext.dispose();
   });
 
-  test("POST /api/users/find でユーザー情報を取得できる", async () => {
-    const response = await apiContext.post("/api/users/find", {
-      data: { email: createdUserEmail },
-    });
+  test("GET /api/users?email=... でユーザー情報を取得できる", async () => {
+    const response = await apiContext.get(
+      `/api/users?email=${encodeURIComponent(createdUserEmail)}`
+    );
 
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
 
-    expect(body).toMatchObject({
+    expect(body[0]).toMatchObject({
       id: createdUserId,
       name: createdUserName,
       email: createdUserEmail,
     });
   });
 
-  test("POST /api/users/get-id でユーザーIDを取得できる", async () => {
-    const response = await apiContext.post("/api/users/get-id", {
-      data: { name: createdUserName },
-    });
+  test("GET /api/users?name=... の結果からユーザーIDを取得できる", async () => {
+    const response = await apiContext.get(
+      `/api/users?name=${encodeURIComponent(createdUserName)}`
+    );
 
     expect(response.ok()).toBeTruthy();
     const body = await response.json();
-    expect(body.userId).toBe(createdUserId);
+    expect(body[0]?.id).toBe(createdUserId);
   });
 
-  test("GET /api/users/all で対象ユーザーが含まれている", async () => {
-    const response = await apiContext.get("/api/users/all");
+  test("GET /api/users で対象ユーザーが含まれている", async () => {
+    const response = await apiContext.get("/api/users");
     expect(response.ok()).toBeTruthy();
 
     const users = (await response.json()) as Array<{
@@ -123,9 +123,10 @@ test.describe("User Management API E2E Test", () => {
 
     shouldCleanup = false;
 
-    const notFound = await apiContext.post("/api/users/find", {
-      data: { email: createdUserEmail },
-    });
-    expect(notFound.status()).toBe(404);
+    const notFound = await apiContext.get(
+      `/api/users?email=${encodeURIComponent(createdUserEmail)}`
+    );
+    expect(notFound.ok()).toBeTruthy();
+    expect(await notFound.json()).toEqual([]);
   });
 });

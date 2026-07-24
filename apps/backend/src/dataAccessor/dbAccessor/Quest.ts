@@ -61,6 +61,9 @@ export interface QuestWhereCondition {
   };
 }
 
+/**
+ * クエストテーブルと関連データへのアクセスを提供する。
+ */
 export class QuestDataAccessor {
   /**
    * 全クエスト取得（オプションでキーワード・ステータスで絞り込み）

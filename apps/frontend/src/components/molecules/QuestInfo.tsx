@@ -9,7 +9,7 @@ interface QuestInfoProps {
   tags: string[];
   rewards?: {
     point_amount: number;
-    incentive_amount?: number;
+    incentive_amount?: string | number;
   };
   participantsCount: number;
   maxParticipants: number;
@@ -45,7 +45,7 @@ const QuestInfo: React.FC<QuestInfoProps> = ({
           <div className="flex justify-between items-center">
             <span>金銭インセンティブ</span>
             <span className="text-xs text-slate-500">
-              ¥{rewards.incentive_amount.toLocaleString()}
+              ¥{Number(rewards.incentive_amount).toLocaleString()}
             </span>
           </div>
         )}

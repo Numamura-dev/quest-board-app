@@ -218,7 +218,7 @@ test.describe("クエストエントリー UI E2E", () => {
       .waitForResponse(
         (response) =>
           response.url().includes("/api/quests/") &&
-          response.url().includes("/join") &&
+          response.url().includes("/participants") &&
           response.request().method() === "POST",
         { timeout: 10000 }
       )

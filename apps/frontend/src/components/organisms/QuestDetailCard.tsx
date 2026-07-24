@@ -3,12 +3,13 @@ import React from "react";
 import StatusRibbon from "@/components/atoms/StatusRibbon";
 import Button from "@/components/atoms/Button";
 import QuestInfo from "@/components/molecules/QuestInfo";
+import type { Quest } from "@quest-board/types";
 
 interface QuestDetailCardProps {
   status: "participating" | "completed" | "applied";
   difficultyColor: string;
   onParticipate: () => void;
-  quest: any;
+  quest: Quest;
 }
 
 const QuestDetailCard: React.FC<QuestDetailCardProps> = ({

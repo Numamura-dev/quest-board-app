@@ -99,7 +99,7 @@ describe("createRateLimiter", () => {
 
     expect(res._headers["X-RateLimit-Limit"]).toBe(10);
     expect(typeof res._headers["X-RateLimit-Remaining"]).toBe("number");
-    expect(typeof res._headers["X-RateLimit-Reset"]).toBe("number");
+    expect(typeof res._headers["X-RateLimit-Reset-After"]).toBe("number");
   });
 
   it("異なる IP のリクエストは独立してカウントされる", () => {

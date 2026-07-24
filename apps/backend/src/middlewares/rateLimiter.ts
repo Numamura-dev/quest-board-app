@@ -6,26 +6,6 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-/**
- * シンプルなインメモリレートリミッター
- *
- * 注意: 複数プロセス/インスタンス構成では Redis 等の共有ストアへの移行を推奨。
- */
-const store = new Map<string, RateLimitEntry>();
-
-/**
- * 期限切れエントリを定期的にクリーンアップ (メモリリーク防止)
- * .unref() でプロセス終了を妨げず、Jest の open handle 警告も回避する。
- */
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store.entries()) {
-    if (entry.resetAt <= now) {
-      store.delete(key);
-    }
-  }
-}, 60_000).unref();
-
 export interface RateLimitOptions {
   /** 制限対象の時間ウィンドウ (ミリ秒) */
   windowMs: number;
@@ -39,6 +19,7 @@ export interface RateLimitOptions {
  * レートリミットミドルウェアファクトリ
  *
  * IP 単位でリクエスト数を制限し、超過時に 429 を返す。
+ * 注意: 複数プロセス/インスタンス構成では Redis 等の共有ストアへの移行を推奨。
  */
 export function createRateLimiter(options: RateLimitOptions) {
   const {
@@ -46,6 +27,20 @@ export function createRateLimiter(options: RateLimitOptions) {
     max,
     message = "Too many requests. Please try again later.",
   } = options;
+
+  // store と setInterval をクロージャ内に閉じ込め、複数インスタンス間の干渉を防ぐ
+  const store = new Map<string, RateLimitEntry>();
+
+  // 期限切れエントリを定期的にクリーンアップ (メモリリーク防止)
+  // .unref() でプロセス終了を妨げず、Jest の open handle 警告も回避する
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store.entries()) {
+      if (entry.resetAt <= now) {
+        store.delete(key);
+      }
+    }
+  }, 60_000).unref();
 
   return function rateLimiter(
     req: Request,
@@ -69,11 +64,12 @@ export function createRateLimiter(options: RateLimitOptions) {
     }
 
     const remaining = Math.max(0, max - entry.count);
-    const resetSeconds = Math.ceil((entry.resetAt - now) / 1000);
+    // X-RateLimit-Reset-After: ウィンドウリセットまでの残り秒数 (エポック秒ではない)
+    const resetAfterSeconds = Math.ceil((entry.resetAt - now) / 1000);
 
     res.setHeader("X-RateLimit-Limit", max);
     res.setHeader("X-RateLimit-Remaining", remaining);
-    res.setHeader("X-RateLimit-Reset", resetSeconds);
+    res.setHeader("X-RateLimit-Reset-After", resetAfterSeconds);
 
     if (entry.count > max) {
       logger.warn(
@@ -99,14 +95,4 @@ export const searchRateLimiter = createRateLimiter({
   windowMs: 60_000,
   max: 30,
   message: "検索リクエストが多すぎます。しばらくしてから再度お試しください。",
-});
-
-/**
- * 汎用 API レートリミット (60秒に100リクエストまで)
- */
-export const generalRateLimiter = createRateLimiter({
-  windowMs: 60_000,
-  max: 100,
-  message:
-    "リクエストが多すぎます。しばらくしてから再度お試しください。",
 });

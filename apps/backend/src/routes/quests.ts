@@ -20,10 +20,11 @@ import {
 	optionalAuthMiddleware,
 	requireAdmin,
 } from "../middlewares/auth.middleware";
+import { searchRateLimiter } from "../middlewares/rateLimiter";
 
 const router = express.Router();
 
-router.get("/", optionalAuthMiddleware, getAllQuests); // GET /quests
+router.get("/", searchRateLimiter, optionalAuthMiddleware, getAllQuests); // GET /quests
 router.get("/:id", getQuestById); // GET /quests/:id
 router.post("/", authMiddleware, createQuest); // POST /quests
 router.put("/:id", authMiddleware, requireAdmin, updateQuest); // PUT /quests/:id

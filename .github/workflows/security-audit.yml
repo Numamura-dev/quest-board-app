@@ -47,8 +47,8 @@ jobs:
         run: |
           AUDIT_RESULT=$(cat audit-result.txt)
           DATE=$(date '+%Y-%m-%d')
-          # 同一ラベルの open issue が既に存在する場合はコメントを追加して重複作成を防ぐ
-          EXISTING=$(gh issue list --label "security" --state open --json number --jq '.[0].number')
+          # 同タイトルの open issue が既に存在する場合はコメントを追加して重複作成を防ぐ
+          EXISTING=$(gh issue list --label "security" --search '"[Security] 依存パッケージの脆弱性" in:title' --state open --json number --jq '.[0].number')
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" \
               --body "## 再スキャン結果 (${DATE})

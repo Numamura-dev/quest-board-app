@@ -4,7 +4,6 @@ const fallbackFirebaseConfig: FirebaseOptions = {
 	apiKey: "local-dev-api-key",
 	authDomain: "local-dev.firebaseapp.com",
 	projectId: "local-dev-project",
-	appId: "1:000000000000:web:localdev",
 };
 
 type FirebaseEnv = Record<string, string | undefined>;
@@ -16,7 +15,6 @@ export const getMissingFirebaseEnvVars = (
 		apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY,
 		authDomain: env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
 		projectId: env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-		appId: env.NEXT_PUBLIC_FIREBASE_APP_ID,
 	};
 
 	return Object.entries(requiredEnvVars)
@@ -46,7 +44,6 @@ export const resolveFirebaseConfig = (
 			apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY,
 			authDomain: env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
 			projectId: env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-			appId: env.NEXT_PUBLIC_FIREBASE_APP_ID,
 		},
 		missingEnvVars: [],
 		isFallback: false,

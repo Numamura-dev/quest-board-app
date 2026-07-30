@@ -11,9 +11,8 @@ describe("getMissingFirebaseEnvVars", () => {
 				NEXT_PUBLIC_FIREBASE_API_KEY: "api-key",
 				NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: undefined,
 				NEXT_PUBLIC_FIREBASE_PROJECT_ID: "project-id",
-				NEXT_PUBLIC_FIREBASE_APP_ID: undefined,
 			}),
-		).toEqual(["authDomain", "appId"]);
+		).toEqual(["authDomain"]);
 	});
 });
 
@@ -24,14 +23,12 @@ describe("resolveFirebaseConfig", () => {
 				NEXT_PUBLIC_FIREBASE_API_KEY: "api-key",
 				NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "example.firebaseapp.com",
 				NEXT_PUBLIC_FIREBASE_PROJECT_ID: "project-id",
-				NEXT_PUBLIC_FIREBASE_APP_ID: "app-id",
 			}),
 		).toEqual({
 			config: {
 				apiKey: "api-key",
 				authDomain: "example.firebaseapp.com",
 				projectId: "project-id",
-				appId: "app-id",
 			},
 			missingEnvVars: [],
 			isFallback: false,
@@ -44,16 +41,14 @@ describe("resolveFirebaseConfig", () => {
 				NEXT_PUBLIC_FIREBASE_API_KEY: undefined,
 				NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: undefined,
 				NEXT_PUBLIC_FIREBASE_PROJECT_ID: undefined,
-				NEXT_PUBLIC_FIREBASE_APP_ID: undefined,
 			}),
 		).toEqual({
 			config: {
 				apiKey: "local-dev-api-key",
 				authDomain: "local-dev.firebaseapp.com",
 				projectId: "local-dev-project",
-				appId: "1:000000000000:web:localdev",
 			},
-			missingEnvVars: ["apiKey", "authDomain", "projectId", "appId"],
+			missingEnvVars: ["apiKey", "authDomain", "projectId"],
 			isFallback: true,
 		});
 	});

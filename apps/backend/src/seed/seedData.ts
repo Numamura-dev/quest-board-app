@@ -7,21 +7,18 @@ export const seedUsers = [
     name: "一般ユーザー",
     email: "questboard+002@example.com",
     role: "user",
-    firebase_uid: "Bw40kXMOiiRQ2gaSJTPYsv1Kkm63",
   },
   {
     key: "admin",
     name: "管理者",
     email: "questboard@example.com",
     role: "admin",
-    firebase_uid: "CNDyBsuqPXVndMh6MFGs1ZdZC9t2",
   },
   {
     key: "admin1",
     name: "管理者1",
     email: "questboard+001@example.com",
     role: "admin",
-    firebase_uid: "lMQnnhrAsWZhaGkjhcAVZRSmfgg2",
   },
 ] as const;
 

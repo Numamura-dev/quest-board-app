@@ -20,9 +20,9 @@
 		"lint:biome": "node scripts/run-biome.cjs lint .",
 		"lint:fix": "node scripts/run-biome.cjs check --apply .",
 		"precommit:biome": "node scripts/run-biome.cjs format --write --staged --files-ignore-unknown=true --no-errors-on-unmatched && node scripts/run-biome.cjs lint --staged --files-ignore-unknown=true --no-errors-on-unmatched",
-		"db:generate": "prisma generate --schema apps/backend/prisma/schema.prisma",
-		"db:push": "prisma db push --schema apps/backend/prisma/schema.prisma",
-		"db:studio": "prisma studio --schema apps/backend/prisma/schema.prisma"
+		"db:generate": "sh -c 'set -a && . apps/backend/.env.local && prisma generate --schema apps/backend/prisma/schema.prisma'",
+		"db:push": "sh -c 'set -a && . apps/backend/.env.local && prisma db push --schema apps/backend/prisma/schema.prisma'",
+		"db:studio": "sh -c 'set -a && . apps/backend/.env.local && prisma studio --schema apps/backend/prisma/schema.prisma'"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.0.0",

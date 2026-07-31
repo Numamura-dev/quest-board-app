@@ -21,6 +21,7 @@ export default defineConfig({
 					{ text: "ドキュメント入口", link: "/" },
 					{ text: "引き継ぎ資料", link: "/handoff" },
 					{ text: "環境構築・起動", link: "/setup-guide" },
+					{ text: "運用手順書（Xserver VPS）", link: "/ops-guide" },
 					{ text: "操作マニュアル", link: "/user-manual" },
 					{ text: "トラブルシューティング", link: "/troubleshooting" },
 					{ text: "要件定義", link: "/quest-rdd" },

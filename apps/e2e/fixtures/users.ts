@@ -1,23 +1,19 @@
-// e2e/fixtures/users.ts
+// E2E テストで使用するユーザー情報（seed データの値に合わせる）
 export const testUsers = {
-  user: {
-    email: "user@test.com",
-    password: "password123",
-    role: "user",
-  },
-  trainee: {
-    email: "trainee@test.com",
-    password: "password123",
-    role: "trainee",
-  },
-  manager: {
-    email: "manager@test.com",
-    password: "password123",
-    role: "manager",
-  },
-  master: {
-    email: "master@test.com",
-    password: "password123",
-    role: "master",
-  },
+	user: {
+		email: "questboard+002@example.com",
+		role: "user",
+	},
+	admin: {
+		email: "questboard@example.com",
+		role: "admin",
+	},
+	screenshotUser: {
+		email: "manager@test.com",
+		role: "user",
+	},
+	screenshotAdmin: {
+		email: "master@test.com",
+		role: "admin",
+	},
 };

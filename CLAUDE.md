@@ -47,9 +47,9 @@ pnpm --filter e2e test                                # Playwright (要 apps/e2e
 
 | ファイル | 主要変数 | 取得元 |
 |---|---|---|
-| backend | `FIREBASE_PROJECT_ID` `FIREBASE_CLIENT_EMAIL` `FIREBASE_PRIVATE_KEY` | Firebase コンソール > サービスアカウント > 秘密鍵生成 |
+| backend | `GOOGLE_CLIENT_ID` | Google Cloud Console > 認証情報 > OAuth 2.0 クライアント ID |
 | backend | `DATABASE_URL` `SHADOW_DATABASE_URL` | `docker-compose.yml` のデフォルト値を参照 |
-| frontend | `NEXT_PUBLIC_FIREBASE_*` | Firebase コンソール > ウェブアプリ |
+| frontend | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google Cloud Console > 認証情報 > OAuth 2.0 クライアント ID |
 | frontend | `NEXT_PUBLIC_API_BASE_URL` | dev: `http://localhost:3001` |
 
 ## アプリケーション概要
@@ -74,7 +74,7 @@ draft（下書き）→ pending（承認待ち、一般ユーザーが submit）
 
 pnpm workspace のモノレポ。`apps/*` (frontend / backend / docs / e2e) と `packages/types` で構成。
 
-### backend (Express + Prisma + Firebase Admin)
+### backend (Express + Prisma + Google OAuth)
 
 リクエストは**厳格な層構造**を通る。新機能は層を飛ばさず縦に追加する:
 
@@ -87,14 +87,14 @@ dataAccessor/dbAccessor/*.ts → Prisma を触る唯一の層 (Quest / User / Re
 
 - **入力検証は `apps/backend/src/schemas/api.ts` の zod schema が single source of truth。** controller に手書きの `if` を足さず、schema を追加して `validateRequest(req, { body, params, query })` で使う。同じ schema から `src/openapi/document.ts` が OpenAPI を生成する (`GET /api/openapi.json`, Swagger UI: `/api/docs`)。
 - **エラーは `utils/appError.ts` の `AppError` / `badRequest` / `notFound` / `unauthorized` / `forbidden` を throw する。** `asyncHandler` が捕捉し、末尾の `errorHandler` ミドルウェアが JSON レスポンス化する。個々の controller で try/catch や res.status は書かない。
-- **認証**: `authMiddleware` が `Authorization: Bearer <Firebase IDトークン>` を検証して `req.user` に付与。`requireAdmin` が DB 上の `role === ROLES.ADMIN` を確認 (`constants/roles.ts`)。Firebase Admin は `config/firebase.ts` の副作用 import で初期化。
+- **認証**: `authMiddleware` が `Authorization: Bearer <Google ID トークン>` を `google-auth-library` で検証して `req.user` に付与。`requireAdmin` が DB 上の `role === ROLES.ADMIN` を確認 (`constants/roles.ts`)。OAuth2Client は `config/auth.ts` の副作用 import で初期化。
 - ログは pino (`config/logger.ts`)。`app.ts` がミドルウェア順・CORS・ルーティングを集約。
 
 ### frontend (Next.js App Router + Atomic Design)
 
-- `src/app/` = App Router のページ (`login` / `signUp` / `quests/[id]` / `mypage` / `admin/dashboard`)。UI は `components/` を **atoms → molecules → organisms → pages** の atomic design で構成。
-- **API 呼び出しは必ず `src/services/httpClient.ts` 経由。** `apiClient` (公開 API) と `authenticatedApiClient` (Firebase IDトークンを自動付与) を使い分ける。fetch を直接書かない。ドメイン別ラッパーは `services/quest.ts` などにある。
-- 認証状態は `hooks/useAuth.ts`、Firebase client 初期化は `services/firebase.ts`。
+- `src/app/` = App Router のページ (`login` / `quests/[id]` / `mypage` / `admin/dashboard`)。UI は `components/` を **atoms → molecules → organisms → pages** の atomic design で構成。
+- **API 呼び出しは必ず `src/services/httpClient.ts` 経由。** `apiClient` (公開 API) と `authenticatedApiClient` (Google ID トークンを自動付与) を使い分ける。fetch を直接書かない。ドメイン別ラッパーは `services/quest.ts` などにある。
+- 認証状態は `hooks/useAuth.ts`、Google ID トークンの保持は `services/auth/googleAuth.ts`。
 
 ### packages/types
 

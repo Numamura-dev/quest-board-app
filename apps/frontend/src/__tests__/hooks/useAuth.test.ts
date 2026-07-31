@@ -1,67 +1,71 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+import React from "react";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 
-// Firebase モック
-const mockUnsubscribe = vi.fn();
-let authStateCallback: ((user: unknown) => void) | null = null;
-
-vi.mock("firebase/auth", () => ({
-	onAuthStateChanged: vi.fn((_auth, callback) => {
-		authStateCallback = callback;
-		return mockUnsubscribe;
-	}),
+vi.mock("@/services/auth/googleAuth", () => ({
+	getIdToken: vi.fn().mockReturnValue(null),
+	setIdToken: vi.fn(),
+	clearIdToken: vi.fn(),
+	decodeIdToken: vi.fn().mockReturnValue(null),
 }));
 
-vi.mock("@/services/firebase", () => ({
-	auth: {},
-}));
+import * as googleAuth from "@/services/auth/googleAuth";
+
+const wrapper = ({ children }: { children: React.ReactNode }) =>
+	React.createElement(AuthProvider, null, children);
 
 describe("useAuth", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		authStateCallback = null;
+		vi.mocked(googleAuth.getIdToken).mockReturnValue(null);
+		vi.mocked(googleAuth.decodeIdToken).mockReturnValue(null);
 	});
 
-	it("初期状態では loading=true, user=null", () => {
-		const { result } = renderHook(() => useAuth());
-		expect(result.current.loading).toBe(true);
+	it("初期状態では loading=false, user=null", async () => {
+		const { result } = renderHook(() => useAuth(), { wrapper });
 		expect(result.current.user).toBeNull();
 		expect(result.current.isAuthenticated).toBe(false);
 	});
 
-	it("ログイン済みユーザーが渡されると user がセットされ loading=false になる", async () => {
+	it("login を呼ぶと user がセットされ isAuthenticated=true になる", async () => {
 		const mockUser = {
-			uid: "test-uid",
-			reload: vi.fn().mockResolvedValue(undefined),
+			sub: "google-sub-1",
+			name: "Test User",
+			email: "test@example.com",
 		};
+		vi.mocked(googleAuth.decodeIdToken).mockReturnValue(mockUser);
 
-		const { result } = renderHook(() => useAuth());
+		const { result } = renderHook(() => useAuth(), { wrapper });
 
-		await act(async () => {
-			authStateCallback?.(mockUser);
+		act(() => {
+			result.current.login("mock-credential");
 		});
 
-		expect(result.current.user).toBe(mockUser);
-		expect(result.current.loading).toBe(false);
+		expect(result.current.user).toEqual(mockUser);
 		expect(result.current.isAuthenticated).toBe(true);
 	});
 
-	it("未ログイン（null）が渡されると isAuthenticated=false になる", async () => {
-		const { result } = renderHook(() => useAuth());
+	it("logout を呼ぶと user が null になる", async () => {
+		const mockUser = {
+			sub: "google-sub-1",
+			name: "Test User",
+			email: "test@example.com",
+		};
+		vi.mocked(googleAuth.decodeIdToken).mockReturnValue(mockUser);
 
-		await act(async () => {
-			authStateCallback?.(null);
+		const { result } = renderHook(() => useAuth(), { wrapper });
+
+		act(() => {
+			result.current.login("mock-credential");
 		});
+		expect(result.current.isAuthenticated).toBe(true);
 
+		act(() => {
+			result.current.logout();
+		});
 		expect(result.current.user).toBeNull();
-		expect(result.current.loading).toBe(false);
 		expect(result.current.isAuthenticated).toBe(false);
-	});
-
-	it("アンマウント時に unsubscribe が呼ばれる", () => {
-		const { unmount } = renderHook(() => useAuth());
-		unmount();
-		expect(mockUnsubscribe).toHaveBeenCalledTimes(1);
 	});
 });

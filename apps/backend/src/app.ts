@@ -1,4 +1,4 @@
-import "./config/firebase"; // Firebase Admin SDK 初期化（副作用import）
+import "./config/auth"; // Google OAuth2Client 初期化（副作用import）
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
@@ -11,6 +11,7 @@ import mypageRouter from "./routes/mypage";
 import questsRouter from "./routes/quests";
 import reviewsRouter from "./routes/reviews";
 import tagsRouter from "./routes/tags";
+import testRouter from "./routes/e2eToken";
 import usersRouter from "./routes/users";
 
 const app = express();
@@ -54,6 +55,9 @@ app.get("/api/openapi.json", (_req, res) => {
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 // ルーティング
+if (process.env.NODE_ENV !== "production") {
+	app.use("/api/test", testRouter);
+}
 app.use("/api/quests", questsRouter);
 app.use("/api/reviews", reviewsRouter);
 app.use("/api/users", usersRouter);

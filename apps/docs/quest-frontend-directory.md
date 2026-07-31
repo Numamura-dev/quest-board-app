@@ -8,7 +8,7 @@
 ## 使用技術
 - フロントエンド：React, TypeScript, Next.js（App Router 構成）
 - コンポーネント設計：Atomic Design（テンプレート層は除く）
-- Firebase Authentication
+- Google OAuth 2.0（@react-oauth/google）
 
 ---
 
@@ -49,10 +49,8 @@ frontend/
 │   │   └── useAuth.ts
 │   ├── utils/
 │   ├── services/
-│   │   ├── firebase.ts
 │   │   ├── auth/
-│   │   │   ├── login.ts
-│   │   │   └── signUp.ts
+│   │   │   └── googleAuth.ts
 │   ├── types/
 │   └── store/
 ├── .env.local

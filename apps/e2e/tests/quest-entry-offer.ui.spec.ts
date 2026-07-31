@@ -1,38 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { type Locator, type Page, expect, test } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
+import { loginAs } from "../helpers/auth";
 
 const BASE_URL = process.env.FRONTEND_BASE_URL ?? "http://localhost:3000";
 
-// E2E 用の固定ユーザー情報
 const USER_EMAIL = "questboard+002@example.com";
-const USER_PASSWORD = "Abcd1234";
-
-// オファー通知確認用ユーザー（現状は同一ユーザーを想定）
 const OFFER_TARGET_EMAIL = USER_EMAIL;
-
-// 管理者ユーザーは別途用意されていることを想定
 const ADMIN_EMAIL = "questboard@example.com";
-const ADMIN_PASSWORD = "Abcd1234";
 
-async function login(page: Page, email: string, password: string) {
-	await page.goto(`${BASE_URL}/login`);
-
-	await page
-		.getByPlaceholder("メールアドレス")
-		.fill(email, { timeout: 10_000 });
-	await page.getByPlaceholder("パスワード").fill(password);
-
-	// ログイン成功アラートを待つ（クリック前に待機を設定）
-	const dialogPromise = page.waitForEvent("dialog", { timeout: 15_000 });
-	await page.getByRole("button", { name: "ログイン" }).click();
-
-	const dialog = await dialogPromise;
-	expect(dialog.message()).toContain("ログイン成功");
-	await dialog.accept();
-
-	// ログイン後のリダイレクトを待つ（トップページにリダイレクトされる）
-	await page.waitForURL(`${BASE_URL}/`, { timeout: 10_000 });
+async function login(page: Page, email: string) {
+	await loginAs(page, email, BASE_URL);
+	await page.goto(`${BASE_URL}/`);
 	await page.waitForLoadState("networkidle");
 }
 
@@ -134,7 +113,7 @@ test.describe("クエストエントリー UI E2E", () => {
 			: null;
 
 		// ログイン
-		await login(page, USER_EMAIL, USER_PASSWORD);
+		await login(page, USER_EMAIL);
 
 		// クエスト一覧へ（リダイレクトを待つ）
 		await page.goto(`${BASE_URL}/quests`, { waitUntil: "networkidle" });
@@ -326,7 +305,7 @@ test.describe("クエストエントリー UI E2E", () => {
 
 	test("既に参加中のクエストに重複応募できない", async ({ page }) => {
 		// すでに E2E_USER_EMAIL が何らかのクエストに参加している前提
-		await login(page, USER_EMAIL, USER_PASSWORD);
+		await login(page, USER_EMAIL);
 
 		await page.goto(`${BASE_URL}/quests`, { waitUntil: "networkidle" });
 
@@ -419,7 +398,7 @@ test.describe("オファー / 承認系 UI（将来実装前提のスケルト�
 		 *  2. 管理者で /admin/dashboard にログインし、応募一覧から該当ユーザーを「承認」
 		 *  3. 一般ユーザーで /mypage を開き、対象クエストのステータスが「参加中」になっていることを確認
 		 */
-		await login(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+		await login(page, ADMIN_EMAIL);
 		await page.goto(`${BASE_URL}/admin/dashboard`);
 		// TODO: 応募承認 UI 実装後にセレクタを追加
 		await expect(page).toHaveTitle(/ダッシュボード/);
@@ -436,7 +415,7 @@ test.describe("オファー / 承認系 UI（将来実装前提のスケルト�
 		 *  3. 対象ユーザー選択 → 送信
 		 *  4. 成功トーストなどを検証
 		 */
-		await login(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+		await login(page, ADMIN_EMAIL);
 		await page.goto(`${BASE_URL}/admin/dashboard`);
 		await expect(page.getByText("クエスト管理")).toBeVisible();
 	});
@@ -454,7 +433,7 @@ test.describe("オファー / 承認系 UI（将来実装前提のスケルト�
 		 *  2. /mypage を表示
 		 *  3. NotificationList に「オファー」関連のメッセージが表示されていることを確認
 		 */
-		await login(page, OFFER_TARGET_EMAIL, USER_PASSWORD);
+		await login(page, OFFER_TARGET_EMAIL);
 		await page.goto(`${BASE_URL}/mypage`);
 
 		await expect(page.getByText("通知")).toBeVisible();

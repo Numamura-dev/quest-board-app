@@ -1,6 +1,6 @@
 # トラブルシューティング
 
-ローカル起動、Firebase 認証、DB、スクリーンショット生成で詰まりやすい問題の確認手順です。
+ローカル起動、Google OAuth 認証、DB、スクリーンショット生成で詰まりやすい問題の確認手順です。
 
 ## `DATABASE_URL` が未設定
 
@@ -23,74 +23,33 @@ cp apps/backend/.env.local.example apps/backend/.env.local
 
 `DATABASE_URL` を MySQL の接続情報に合わせて設定します。
 
-## Firebase Admin SDK の秘密鍵エラー
+## `Wrong recipient, payload audience != requiredAudience`
 
 症状:
 
-- backend 起動時に `Invalid PEM formatted message`
-- backend 起動時に Firebase Admin SDK の初期化に失敗する
+- ログイン後に backend が 401 を返す
+- backend ログに `Wrong recipient, payload audience != requiredAudience`
+
+原因:
+
+`apps/frontend/.env.local` の `NEXT_PUBLIC_GOOGLE_CLIENT_ID` と `apps/backend/.env.local` の `GOOGLE_CLIENT_ID` が一致していません。
 
 対応:
 
-- Firebase コンソールの「サービス アカウント」から新しい秘密鍵 JSON を取得する
-- `FIREBASE_PRIVATE_KEY` をダブルクォートで囲む
-- JSON 内の `\n` を消さない
-
-```ini
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-```
-
-起動ログに次が出れば Admin SDK は初期化できています。
-
-```text
-[firebase] Firebase Admin SDK をサービスアカウントで初期化しました
-```
-
-## `auth/api-key-not-valid`
-
-症状:
-
-- ログイン時に `Firebase: Error (auth/api-key-not-valid...)`
-
-確認:
-
-- `apps/frontend/.env.local` の `NEXT_PUBLIC_FIREBASE_API_KEY` が Firebase Web アプリの `apiKey` と一致しているか
-- frontend を env 変更後に再起動したか
-- ブラウザのアクセス先が `http://localhost:3000` か
-
-注意:
-
-Firebase API key に referrer 制限がある場合、`http://127.0.0.1:3000` では失敗し、`http://localhost:3000` では成功することがあります。
-
-## `INVALID_LOGIN_CREDENTIALS`
-
-症状:
-
-- Firebase REST ログイン、または画面ログインで `INVALID_LOGIN_CREDENTIALS`
-
-対応:
-
-- Firebase Console > Authentication > Users に対象メールが存在するか確認する
-- パスワードを再設定する
-- E2E / スクショ用のユーザーと `apps/e2e/tests/manual-screenshots.spec.ts` の固定ユーザーが一致しているか確認する
-
-現在のスクリーンショット用ユーザー:
-
-| 用途 | メール | パスワード |
-| --- | --- | --- |
-| 一般ユーザー | `manager@test.com` | `password123` |
-| 管理者 | `master@test.com` | `password123` |
+1. Google Cloud Console > 認証情報 でクライアント ID をコピーする
+2. `apps/frontend/.env.local` と `apps/backend/.env.local` の両方に同じ値を設定する
+3. frontend と backend を再起動する
 
 ## `User not found`
 
 症状:
 
-- Firebase ログインは成功するが、backend の `/api/users/me` が 404
+- Google ログインは成功するが、backend の `/api/users/me` が 404
 - backend ログに `User not found`
 
 原因:
 
-Firebase Auth の UID と DB の `users.firebase_uid` が一致していません。
+Google Account の `sub` クレームと DB の `users.google_sub` が一致していません。
 
 確認:
 
@@ -98,7 +57,7 @@ Firebase Auth の UID と DB の `users.firebase_uid` が一致していませ�
 pnpm --filter backend seed
 ```
 
-それでも直らない場合は、Firebase Authentication の UID を確認し、DB の `users.firebase_uid` と合わせます。スクリーンショット spec は実ログインから UID を取得して DB を upsert するため、`pnpm docs:screenshots` 実行時は自動で補正されます。
+シードで補正されない場合は `users` テーブルを確認し、`google_sub` カラムが正しいか確認します。スクリーンショット spec は `google_sub = email` で upsert するため、`pnpm docs:screenshots` 実行時は自動で補正されます。
 
 ## 3000 / 3001 ポートが使用中
 

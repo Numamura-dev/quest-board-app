@@ -39,9 +39,9 @@
   -> MySQL
 
 認証:
-Firebase Authentication
-  -> frontend でログイン状態を管理
-  -> backend で Firebase ID token を検証
+Google OAuth 2.0
+  -> frontend で Google ログイン（@react-oauth/google）
+  -> backend で Google ID token を検証（google-auth-library）
 ```
 
 ## リポジトリ構成
@@ -68,7 +68,7 @@ repo
 | --- | --- |
 | 画面、導線、表示 | `apps/frontend/src/app`, `apps/frontend/src/components` |
 | API 呼び出し | `apps/frontend/src/services` |
-| 認証 | `apps/frontend/src/hooks`, `apps/frontend/src/services/firebase.ts`, `apps/backend/src/middlewares/auth.middleware.ts` |
+| 認証 | `apps/frontend/src/hooks`, `apps/frontend/src/services/auth/googleAuth.ts`, `apps/backend/src/middlewares/auth.middleware.ts` |
 | API 追加、修正 | `apps/backend/src/routes`, `apps/backend/src/controllers`, `apps/backend/src/services` |
 | DB 変更 | `apps/backend/prisma/schema.prisma`, `apps/backend/src/dataAccessor` |
 | テスト | `apps/frontend/src/__tests__`, `apps/backend/src/__tests__`, `apps/e2e/tests` |
@@ -83,7 +83,7 @@ AI エージェントが最初に読む文書は `README.md`、`AGENTS.md`、`do
 - Node.js v22.x
 - pnpm v10.x
 - Docker / Docker Compose
-- Firebase プロジェクト
+- Google Cloud Console で OAuth 2.0 クライアント ID を発行済み
 
 確認コマンド:
 
@@ -142,16 +142,11 @@ pnpm dev
 cp apps/frontend/.env.local.example apps/frontend/.env.local
 ```
 
-`apps/frontend/.env.local` に Firebase Web アプリの設定値を入れます。
+`apps/frontend/.env.local` に Google OAuth の設定値を入れます。
 
 | 変数名 | 説明 |
 | --- | --- |
-| `NEXT_PUBLIC_FIREBASE_API_KEY` | Firebase コンソール > プロジェクトの設定 > ウェブアプリ |
-| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Firebase Auth domain |
-| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Firebase project ID |
-| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Firebase Storage bucket |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Firebase messaging sender ID |
-| `NEXT_PUBLIC_FIREBASE_APP_ID` | Firebase app ID |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google Cloud Console > 認証情報 > OAuth 2.0 クライアント ID |
 | `NEXT_PUBLIC_API_BASE_URL` | backend URL。ローカル既定値は `http://localhost:3001` |
 | `PORT` | frontend port。ローカル既定値は `3000` |
 
@@ -164,10 +159,8 @@ cp apps/backend/.env.local.example apps/backend/.env.local
 `apps/backend/.env.local.example` は `docker-compose.yml` の既定値と揃っています。通常のローカル開発では、そのままコピーした DB 接続設定で動きます。
 
 ```env
-# Firebase Admin SDK
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+# Google OAuth
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 
 # Prisma / MySQL
 DATABASE_URL=mysql://app_user:app_password@localhost:3306/your_project_db
@@ -185,7 +178,7 @@ FRONTEND_BASE_URL=http://localhost:3000
 
 `SHADOW_DATABASE_URL` は Prisma が `db push` 時の差分検出に使う一時 DB です。shadow DB を自動作成できるよう、ローカルでは root ユーザーを使います。
 
-Firebase 認証を含む動作確認には Firebase Admin SDK の値が必要です。未設定でも一部の build/test は進みますが、認証 API の実運用確認はできません。
+Google OAuth を含む動作確認には `GOOGLE_CLIENT_ID` の設定が必要です。未設定でも一部の build/test は進みますが、認証 API の実運用確認はできません。
 
 ## データベース
 
@@ -326,14 +319,13 @@ backend 起動後に確認できます。
 
 request schema は `apps/backend/src/schemas/api.ts` の Zod schema を source of truth とし、OpenAPI ドキュメントも同じ schema から生成します。新しい API を追加する場合は controller に手書き validation を足すのではなく、schema を追加して `validateRequest` から利用してください。
 
-## Firebase のセットアップ
+## Google OAuth のセットアップ
 
-1. Firebase コンソールでプロジェクトを作成
-2. Authentication を有効化し、メール / パスワードなどのログイン方法を設定
-3. ウェブアプリを追加し、設定値を `apps/frontend/.env.local` に記入
-4. サービスアカウントの秘密鍵を生成し、`apps/backend/.env.local` に記入
-
-Firebase Admin SDK の秘密鍵は Firebase コンソール > プロジェクトの設定 > サービスアカウント > 新しい秘密鍵の生成 から取得できます。
+1. Google Cloud Console でプロジェクトを作成（または既存のものを使用）
+2. 「APIとサービス」→「認証情報」→「認証情報を作成」→「OAuth 2.0 クライアント ID」
+3. アプリケーションの種類: **ウェブアプリケーション**
+4. 承認済みの JavaScript 生成元に `http://localhost:3000`（開発用）を追加
+5. 発行されたクライアント ID を `apps/frontend/.env.local` と `apps/backend/.env.local` の両方に設定
 
 ## トラブルシューティング
 

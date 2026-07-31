@@ -11,7 +11,7 @@ import {
 	getReviewByIdService,
 	updateReviewService,
 } from "../../services/reviewService";
-import { getUserByFirebaseUidService } from "../../services/userService";
+import { getUserByGoogleSubService } from "../../services/userService";
 import { AppError } from "../../utils/appError";
 import { validateRequest } from "../../utils/validate";
 
@@ -27,7 +27,7 @@ jest.mock("../../services/reviewService", () => ({
 }));
 
 jest.mock("../../services/userService", () => ({
-	getUserByFirebaseUidService: jest.fn(),
+	getUserByGoogleSubService: jest.fn(),
 }));
 
 const mockValidateRequest = validateRequest as jest.MockedFunction<
@@ -45,9 +45,9 @@ const mockDeleteReviewService = deleteReviewService as jest.MockedFunction<
 const mockGetReviewByIdService = getReviewByIdService as jest.MockedFunction<
 	typeof getReviewByIdService
 >;
-const mockGetUserByFirebaseUidService =
-	getUserByFirebaseUidService as jest.MockedFunction<
-		typeof getUserByFirebaseUidService
+const mockGetUserByGoogleSubService =
+	getUserByGoogleSubService as jest.MockedFunction<
+		typeof getUserByGoogleSubService
 	>;
 
 const createResponse = () =>
@@ -73,13 +73,13 @@ describe("reviewController", () => {
 			body: { reviewer_id: 999, rating: 5, comment: "test" },
 			query: {},
 		} as never);
-		mockGetUserByFirebaseUidService.mockResolvedValueOnce({
+		mockGetUserByGoogleSubService.mockResolvedValueOnce({
 			id: 10,
 			role: ROLES.USER,
 		} as never);
 		mockCreateReviewService.mockResolvedValueOnce({ id: 1 } as never);
 
-		const req = { user: { uid: "firebase-uid-10" } } as Request;
+		const req = { user: { sub: "google-sub-10" } } as Request;
 		const res = createResponse();
 		const next = jest.fn();
 
@@ -102,7 +102,7 @@ describe("reviewController", () => {
 			body: { rating: 3, comment: "updated" },
 			query: {},
 		} as never);
-		mockGetUserByFirebaseUidService.mockResolvedValueOnce({
+		mockGetUserByGoogleSubService.mockResolvedValueOnce({
 			id: 2,
 			role: ROLES.USER,
 		} as never);
@@ -111,7 +111,7 @@ describe("reviewController", () => {
 			reviewer_id: 3,
 		} as never);
 
-		const req = { user: { uid: "firebase-uid-2" } } as Request;
+		const req = { user: { sub: "google-sub-2" } } as Request;
 		const res = createResponse();
 		const next = jest.fn();
 
@@ -132,7 +132,7 @@ describe("reviewController", () => {
 			body: {},
 			query: {},
 		} as never);
-		mockGetUserByFirebaseUidService.mockResolvedValueOnce({
+		mockGetUserByGoogleSubService.mockResolvedValueOnce({
 			id: 8,
 			role: ROLES.ADMIN,
 		} as never);
@@ -142,7 +142,7 @@ describe("reviewController", () => {
 		} as never);
 		mockDeleteReviewService.mockResolvedValueOnce(undefined as never);
 
-		const req = { user: { uid: "firebase-uid-8" } } as Request;
+		const req = { user: { sub: "google-sub-8" } } as Request;
 		const res = createResponse();
 		const next = jest.fn();
 

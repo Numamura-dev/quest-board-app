@@ -9,7 +9,7 @@ Quest Board backend のログを、開発時は読みやすく、本番では機
 - `apps/backend`
 - HTTP リクエストログ
 - アプリケーションエラーログ
-- Firebase 初期化ログ
+- Google OAuth 初期化ログ
 - service 層の業務エラーログ
 
 ## 採用ライブラリ
@@ -65,14 +65,14 @@ Quest Board backend のログを、開発時は読みやすく、本番では機
 
 - `err`
 - 業務識別子
-  - 例: `userId`, `questId`, `firebaseUid`
+  - 例: `userId`, `questId`, `googleSub`
 
 ## 実装位置
 
 - 共通 logger: `apps/backend/src/config/logger.ts`
 - リクエストログ: `apps/backend/src/app.ts`
 - グローバルエラーハンドラ: `apps/backend/src/middlewares/errorHandler.ts`
-- Firebase 初期化: `apps/backend/src/config/firebase.ts`
+- Google OAuth 初期化: `apps/backend/src/config/auth.ts`
 
 ## 運用ルール
 

@@ -20,7 +20,7 @@
 - **フロントエンド**: React, TypeScript, Next.js
 - **バックエンド**: Node.js (Express), TypeScript
 - **データベース**: MySQL
-- **認証**: Firebase Authentication
+- **認証**: Google OAuth 2.0（@react-oauth/google / google-auth-library）
 - **通知**: Slack Webhook
 - **パッケージ管理**: pnpm
 - **コード整形・Lint**: Biome
@@ -496,7 +496,7 @@ Closes #123
 ## 🔐 セキュリティ規約
 
 ### 認証・認可
-- Firebase Authentication必須
+- Google OAuth 2.0 による認証必須
 - JWTトークン検証をミドルウェアで実装
 - ロールベースアクセス制御（RBAC）適用
 
@@ -515,9 +515,8 @@ const config = {
     username: process.env.DB_USERNAME || '',
     password: process.env.DB_PASSWORD || ''
   },
-  firebase: {
-    apiKey: process.env.FIREBASE_API_KEY || '',
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || ''
+  googleOAuth: {
+    clientId: process.env.GOOGLE_CLIENT_ID || ''
   }
 };
 

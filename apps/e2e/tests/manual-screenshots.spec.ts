@@ -3,15 +3,14 @@ import path from "node:path";
 import { type Page, expect, test } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import { loginAs, logout } from "../helpers/auth";
 
 const BASE_URL = process.env.FRONTEND_BASE_URL ?? "http://localhost:3000";
 const SCREENSHOT_DIR = path.resolve(__dirname, "../../docs/public/manual");
 const MANUAL_PREFIX = "操作マニュアル撮影";
 
 const USER_EMAIL = "manager@test.com";
-const USER_PASSWORD = "password123";
 const ADMIN_EMAIL = "master@test.com";
-const ADMIN_PASSWORD = "password123";
 
 dotenv.config({ path: path.resolve(__dirname, "../../backend/.env.local") });
 
@@ -28,88 +27,7 @@ type ManualFixture = {
 	pendingQuestTitle: string;
 };
 
-type FirebaseLoginResult = {
-	localId: string;
-	idToken: string;
-};
-
 test.describe.configure({ mode: "serial" });
-
-async function login(page: Page, email: string, password: string) {
-	await page.goto(`${BASE_URL}/login`);
-	await page.getByPlaceholder("メールアドレス").fill(email);
-	await page.getByPlaceholder("パスワード").fill(password);
-
-	const dialogPromise = page.waitForEvent("dialog", { timeout: 15_000 });
-	await page.getByRole("button", { name: "ログイン" }).click();
-	const dialog = await dialogPromise;
-	expect(dialog.message()).toContain("ログイン成功");
-	await dialog.accept();
-
-	await page.waitForURL(`${BASE_URL}/`, { timeout: 10_000 });
-	await page.waitForLoadState("networkidle");
-}
-
-async function logout(page: Page) {
-	await page.context().clearCookies();
-	await page.goto(`${BASE_URL}/`);
-	await page.evaluate(() => {
-		localStorage.clear();
-		sessionStorage.clear();
-	});
-}
-
-function readFrontendEnv() {
-	const envPath = path.resolve(__dirname, "../../frontend/.env.local");
-	const envText = fs.readFileSync(envPath, "utf8");
-	return Object.fromEntries(
-		envText.split(/\r?\n/).flatMap((line) => {
-			const trimmed = line.trim();
-			if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) {
-				return [];
-			}
-
-			const separatorIndex = trimmed.indexOf("=");
-			const key = trimmed.slice(0, separatorIndex);
-			const value = trimmed.slice(separatorIndex + 1).replace(/^"|"$/g, "");
-			return [[key, value]];
-		}),
-	);
-}
-
-async function getFirebaseLogin(
-	email: string,
-	password: string,
-): Promise<FirebaseLoginResult> {
-	const frontendEnv = readFrontendEnv();
-	const apiKey = frontendEnv.NEXT_PUBLIC_FIREBASE_API_KEY;
-	if (!apiKey || apiKey === "your-api-key") {
-		throw new Error(
-			"NEXT_PUBLIC_FIREBASE_API_KEY が未設定です。apps/frontend/.env.local を確認してください。",
-		);
-	}
-
-	const response = await fetch(
-		`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
-		{
-			method: "POST",
-			headers: { "content-type": "application/json" },
-			body: JSON.stringify({ email, password, returnSecureToken: true }),
-		},
-	);
-	const body = await response.json();
-
-	if (!response.ok) {
-		throw new Error(
-			`Firebase テストユーザーでログインできません: ${email} (${body.error?.message ?? response.status})`,
-		);
-	}
-
-	return {
-		localId: body.localId,
-		idToken: body.idToken,
-	};
-}
 
 async function capture(page: Page, fileName: string) {
 	await page.waitForLoadState("networkidle");
@@ -182,22 +100,18 @@ async function createQuest(data: {
 async function setupManualFixtures(): Promise<ManualFixture> {
 	await cleanupManualData();
 
-	const [userLogin, adminLogin] = await Promise.all([
-		getFirebaseLogin(USER_EMAIL, USER_PASSWORD),
-		getFirebaseLogin(ADMIN_EMAIL, ADMIN_PASSWORD),
-	]);
-
+	// Google OAuth 移行後は google_sub = email として DB に登録する
 	const user = await prisma.user.upsert({
 		where: { email: USER_EMAIL },
 		create: {
 			name: "マニュアル一般ユーザー",
 			email: USER_EMAIL,
 			role: "user",
-			firebase_uid: userLogin.localId,
+			google_sub: USER_EMAIL,
 		},
 		update: {
 			role: "user",
-			firebase_uid: userLogin.localId,
+			google_sub: USER_EMAIL,
 		},
 	});
 	const admin = await prisma.user.upsert({
@@ -206,11 +120,11 @@ async function setupManualFixtures(): Promise<ManualFixture> {
 			name: "マニュアル管理者",
 			email: ADMIN_EMAIL,
 			role: "admin",
-			firebase_uid: adminLogin.localId,
+			google_sub: ADMIN_EMAIL,
 		},
 		update: {
 			role: "admin",
-			firebase_uid: adminLogin.localId,
+			google_sub: ADMIN_EMAIL,
 		},
 	});
 
@@ -314,6 +228,7 @@ test.describe("画面操作マニュアル用スクリーンショット", () =>
 	test("実装済み画面を撮影する", async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 1000 });
 
+		// 未ログイン状態のホーム
 		await logout(page);
 		await page.goto(`${BASE_URL}/`);
 		await expect(
@@ -321,15 +236,17 @@ test.describe("画面操作マニュアル用スクリーンショット", () =>
 		).toBeVisible();
 		await capture(page, "home-logged-out.png");
 
+		// ログイン画面
 		await page.goto(`${BASE_URL}/login`);
 		await expect(page.getByRole("heading", { name: "ログイン" })).toBeVisible();
 		await capture(page, "login.png");
 
+		// 新規登録画面（Google OAuth 移行後はログインへリダイレクト）
 		await page.goto(`${BASE_URL}/signUp`);
-		await expect(page.getByRole("heading", { name: "新規登録" })).toBeVisible();
 		await capture(page, "signup.png");
 
-		await login(page, USER_EMAIL, USER_PASSWORD);
+		// 一般ユーザーとしてログイン
+		await loginAs(page, USER_EMAIL, BASE_URL);
 		await page.goto(`${BASE_URL}/quests`, { waitUntil: "networkidle" });
 		await expect(page.getByText(fixture.activeQuestTitle)).toBeVisible({
 			timeout: 15_000,
@@ -366,8 +283,9 @@ test.describe("画面操作マニュアル用スクリーンショット", () =>
 		).toBeVisible({ timeout: 15_000 });
 		await capture(page, "mypage.png");
 
+		// 管理者としてログイン
 		await logout(page);
-		await login(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+		await loginAs(page, ADMIN_EMAIL, BASE_URL);
 		await page.goto(`${BASE_URL}/admin/dashboard`, {
 			waitUntil: "networkidle",
 		});

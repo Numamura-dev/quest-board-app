@@ -25,7 +25,7 @@ features:
     link: /user-manual
     linkText: 操作マニュアルへ
   - title: ローカル環境を起動する
-    details: env 作成、Firebase 設定、Docker / MySQL、Prisma、seed、FE / BE / docs の起動手順を確認できます。
+    details: env 作成、Google OAuth 設定、Docker / MySQL、Prisma、seed、FE / BE / docs の起動手順を確認できます。
     link: /setup-guide
     linkText: 環境構築・起動へ
   - title: 15分で把握する

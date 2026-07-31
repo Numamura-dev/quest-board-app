@@ -16,7 +16,7 @@ import {
 	getReviewsByQuestIdService,
 	updateReviewService,
 } from "../services/reviewService";
-import { getUserByFirebaseUidService } from "../services/userService";
+import { getUserByGoogleSubService } from "../services/userService";
 import {
 	badRequest,
 	forbidden,
@@ -27,12 +27,12 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
 const resolveAuthenticatedUser = async (req: Request) => {
-	const firebaseUid = req.user?.uid;
-	if (!firebaseUid) {
+	const googleSub = req.user?.sub;
+	if (!googleSub) {
 		throw unauthorized();
 	}
 
-	const user = req.appUser ?? (await getUserByFirebaseUidService(firebaseUid));
+	const user = req.appUser ?? (await getUserByGoogleSubService(googleSub));
 	if (!user) {
 		throw forbidden("Forbidden: user not found");
 	}

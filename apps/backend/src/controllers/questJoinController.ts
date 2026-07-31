@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { QuestJoinParamSchema } from "../schemas/api";
 import { addUserToQuest } from "../services/questJoinService";
-import { getUserByFirebaseUidService } from "../services/userService";
+import { getUserByGoogleSubService } from "../services/userService";
 import { badRequest, notFound, unauthorized } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
@@ -10,12 +10,12 @@ import { validateRequest } from "../utils/validate";
  * 認証済みユーザーをクエスト参加者として登録する。
  */
 export const joinQuest = asyncHandler(async (req: Request, res: Response) => {
-	const firebaseUid = req.user?.uid;
-	if (!firebaseUid) {
+	const googleSub = req.user?.sub;
+	if (!googleSub) {
 		throw unauthorized();
 	}
 
-	const user = await getUserByFirebaseUidService(firebaseUid);
+	const user = await getUserByGoogleSubService(googleSub);
 	if (!user) {
 		throw notFound("User not found");
 	}

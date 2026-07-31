@@ -564,7 +564,7 @@ const AdminDashboard = () => {
 						<p className="text-sm text-slate-600">ロール: {user.role}</p>
 					</div>
 					<p className="text-red-600 text-sm mt-4 font-medium">
-						⚠️この操作によりユーザーとFirebase認証が完全に削除されます。関連するクエスト参加履歴やレビューも削除される可能性があります。
+						⚠️この操作によりユーザーが完全に削除されます。関連するクエスト参加履歴やレビューも削除される可能性があります。
 					</p>
 				</div>
 

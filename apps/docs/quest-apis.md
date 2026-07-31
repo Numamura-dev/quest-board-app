@@ -15,7 +15,7 @@ API の全体像、命名方針、主要 endpoint を確認するための資料
 - フロントエンド：React, TypeScript, Next.js（Atomic Design準拠）
 - バックエンド：Node.js (Express), TypeScript
 - DB：Prisma
-- 認証：Firebase Authentication
+- 認証：Google OAuth 2.0（google-auth-library）
 - パッケージ管理：pnpm
 - コード整形・Lint：Biome
 
@@ -25,9 +25,9 @@ API の全体像、命名方針、主要 endpoint を確認するための資料
 
 | エンドポイント名                 | 対象画面                 | 概要                                               |
 | -------------------------------- | ------------------------ | ---------------------------------------------------|
-| `POST /api/session`              | ログイン後の初回通信     | Firebase IDトークンを受け取り、セッションを確立。   |
+| `POST /api/session`              | ログイン後の初回通信     | Google ID トークンを受け取り、セッションを確立。    |
 | `DELETE /api/session`            | ログアウト               | サーバー側のセッションまたはCookieを削除。         |
-| `GET /api/users/me`              | マイページ               | Firebaseトークンをもとに、ユーザー情報を取得。     |
+| `GET /api/users/me`              | マイページ               | Google ID トークンをもとに、ユーザー情報を取得。   |
 | `PUT /api/users/me`              | ユーザー情報編集         | プロフィール（名前・アバターなど）を更新。         |
 | `GET /api/quests`                | クエスト一覧画面         | 公開中のクエストを一覧で取得。クエリで絞り込み可。 |
 | `GET /api/quests/:id`            | クエスト詳細画面         | クエストの詳細情報を取得。                         |
@@ -132,7 +132,7 @@ API の全体像、命名方針、主要 endpoint を確認するための資料
 ## 📝 補足
 
 - OpenAPI (Swagger) によるドキュメント自動生成にも対応予定
-- Firebase 認証により、認証系APIの大部分はクライアント側で完結
+- Google OAuth 2.0 により、認証系APIの大部分はクライアント側で完結
 - 管理者専用APIには RBAC に基づく保護を必須とします
 - すべてのレスポンスは JSON形式、HTTPステータスコード準拠
 

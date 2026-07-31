@@ -44,7 +44,7 @@ ZIP で受け取った開発者が、15 分程度で全体像と最初の作業�
 | Frontend | Next.js / React UI |
 | Backend | Express API |
 | DB | MySQL + Prisma |
-| Auth | Firebase Authentication |
+| Auth | Google OAuth 2.0 |
 | Docs | VitePress |
 
 データの流れ:
@@ -57,7 +57,7 @@ Browser
   -> MySQL
 ```
 
-認証は Firebase Authentication のトークンを frontend で扱い、backend で検証します。
+認証は Google OAuth 2.0 の ID トークンを frontend で扱い、backend で検証します。
 
 ---
 
@@ -102,7 +102,7 @@ Browser
 - Node.js
 - pnpm
 - Docker / Docker Compose
-- Firebase プロジェクト
+- Google Cloud Console で OAuth 2.0 クライアント ID を発行済み
 
 最短手順:
 
@@ -142,7 +142,7 @@ Docs は通常 `http://localhost:5173` で確認します。
 | API 呼び出し | `apps/frontend/src/services` | [API 一覧](./quest-apis.md) |
 | API 追加 / 修正 | `apps/backend/src/routes`, `apps/backend/src/controllers`, `apps/backend/src/services` | [BE のディレクトリ構成](./quest-backend-directory.md) |
 | DB 変更 | `apps/backend/prisma/schema.prisma`, `apps/backend/src/dataAccessor` | [テーブル定義書](./quest-tdd.md) |
-| 認証変更 | `apps/frontend/src/hooks`, `apps/frontend/src/services/firebase.ts`, `apps/backend/src/middlewares/auth.middleware.ts` | `README.md` |
+| 認証変更 | `apps/frontend/src/hooks`, `apps/frontend/src/services/auth/googleAuth.ts`, `apps/backend/src/middlewares/auth.middleware.ts` | `README.md` |
 | テスト追加 | `apps/frontend/src/__tests__`, `apps/backend/src/__tests__`, `apps/e2e/tests` | `apps/backend/src/__tests__/README.md` |
 
 ---
@@ -175,7 +175,7 @@ pnpm build:docs
 ## 10. 引き継ぎ時の注意点
 
 - `.env` / `.env.local` は ZIP に含めない
-- Firebase Admin SDK の秘密鍵は別経路で安全に共有する
+- Google OAuth クライアント ID は Google Cloud Console から再発行できるため、秘密鍵の共有は不要
 - `node_modules` は ZIP に含めない
 - `.next`、`dist`、coverage などの build artifact は ZIP に含めない
 - 受領者は `README.md` の手順で clean setup する

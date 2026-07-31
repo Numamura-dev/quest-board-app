@@ -26,7 +26,7 @@ Frontend (Next.js)
   -> MySQL
 ```
 
-認証には Firebase Authentication を使用する。
+認証には Google OAuth 2.0 を使用する（google-auth-library で ID トークンを検証）。
 
 ## リポジトリ構造
 

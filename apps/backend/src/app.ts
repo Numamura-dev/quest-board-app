@@ -1,4 +1,4 @@
-import "./config/firebase"; // Firebase Admin SDK 初期化（副作用import）
+import "./config/auth"; // Google OAuth2Client 初期化（副作用import）
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";

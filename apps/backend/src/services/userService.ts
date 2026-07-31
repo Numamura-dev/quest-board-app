@@ -1,5 +1,6 @@
 import { UserDataAccessor } from "../dataAccessor/dbAccessor/User";
 import { logger } from "../config/logger";
+import { conflict } from "../utils/appError";
 
 const userDataAccessor = new UserDataAccessor();
 
@@ -48,7 +49,14 @@ export const linkGoogleSubToExistingUserService = async (
 
 		const byEmail = await userDataAccessor.findByEmail(email);
 		if (byEmail) {
-			return await userDataAccessor.update(byEmail.id, { google_sub: googleSub });
+			if (byEmail.google_sub !== null) {
+				throw conflict(
+					"This email is already linked to a different Google account",
+				);
+			}
+			return await userDataAccessor.update(byEmail.id, {
+				google_sub: googleSub,
+			});
 		}
 
 		return null;

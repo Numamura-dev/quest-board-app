@@ -5,6 +5,7 @@ import {
 	createUserService,
 	getAllUsersService,
 	deleteUserService,
+	linkGoogleSubToExistingUserService,
 } from "../../services/userService";
 
 jest.mock("../../dataAccessor/dbAccessor/User", () => {
@@ -139,6 +140,66 @@ describe("userService", () => {
 				new Error("DB Error"),
 			);
 			await expect(getAllUsersService()).rejects.toThrow("DB Error");
+		});
+	});
+
+	describe("linkGoogleSubToExistingUserService", () => {
+		const newGoogleSub = "google-sub-new";
+		const existingEmail = "alice@example.com";
+
+		it("google_sub が一致するユーザーが存在する場合はそのまま返す", async () => {
+			mockUserDataAccessor.findByGoogleSub.mockResolvedValue(mockAdminUser1);
+
+			const result = await linkGoogleSubToExistingUserService(
+				mockAdminUser1.google_sub ?? "",
+				existingEmail,
+			);
+
+			expect(result).toEqual(mockAdminUser1);
+			expect(mockUserDataAccessor.findByEmail).not.toHaveBeenCalled();
+			expect(mockUserDataAccessor.update).not.toHaveBeenCalled();
+		});
+
+		it("google_sub 未設定の既存ユーザーに紐付けて更新する", async () => {
+			const userWithoutGoogleSub = { ...mockAdminUser1, google_sub: null };
+			const updatedUser = { ...userWithoutGoogleSub, google_sub: newGoogleSub };
+			mockUserDataAccessor.findByGoogleSub.mockResolvedValue(null);
+			mockUserDataAccessor.findByEmail.mockResolvedValue(userWithoutGoogleSub);
+			mockUserDataAccessor.update.mockResolvedValue(updatedUser);
+
+			const result = await linkGoogleSubToExistingUserService(
+				newGoogleSub,
+				existingEmail,
+			);
+
+			expect(mockUserDataAccessor.update).toHaveBeenCalledWith(
+				userWithoutGoogleSub.id,
+				{ google_sub: newGoogleSub },
+			);
+			expect(result).toEqual(updatedUser);
+		});
+
+		it("既に別の google_sub が設定されている場合は 409 CONFLICT を投げる", async () => {
+			mockUserDataAccessor.findByGoogleSub.mockResolvedValue(null);
+			mockUserDataAccessor.findByEmail.mockResolvedValue(mockAdminUser1);
+
+			await expect(
+				linkGoogleSubToExistingUserService(newGoogleSub, existingEmail),
+			).rejects.toMatchObject({ statusCode: 409, code: "CONFLICT" });
+
+			expect(mockUserDataAccessor.update).not.toHaveBeenCalled();
+		});
+
+		it("google_sub でも email でも見つからない場合は null を返す", async () => {
+			mockUserDataAccessor.findByGoogleSub.mockResolvedValue(null);
+			mockUserDataAccessor.findByEmail.mockResolvedValue(null);
+
+			const result = await linkGoogleSubToExistingUserService(
+				newGoogleSub,
+				"unknown@example.com",
+			);
+
+			expect(result).toBeNull();
 		});
 	});
 

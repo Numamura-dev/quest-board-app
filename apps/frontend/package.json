@@ -15,11 +15,11 @@
 		"test:coverage": "vitest run --coverage"
 	},
 	"dependencies": {
-		"@quest-board/types": "workspace:*",
 		"@emotion/react": "^11.14.0",
 		"@emotion/styled": "^11.14.1",
 		"@mui/material": "^7.3.1",
-		"firebase": "^12.0.0",
+		"@quest-board/types": "workspace:*",
+		"@react-oauth/google": "^0.13.5",
 		"lucide-react": "^0.534.0",
 		"next": "15.5.12",
 		"react": "^19.0.0",

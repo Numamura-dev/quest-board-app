@@ -1,87 +1,82 @@
 import type { Request, Response } from "express";
 import { ROLES } from "../constants/roles";
-import {
-	CreateUserBodySchema,
-	UserListQuerySchema,
-	UserIdParamSchema,
-} from "../schemas/api";
+import { UserListQuerySchema, UserIdParamSchema } from "../schemas/api";
 import {
 	createUserService,
 	deleteUserService,
 	findUserByNameOrEmailService,
 	getAllUsersService,
-	getUserByFirebaseUidService,
+	getUserByGoogleSubService,
 } from "../services/userService";
-import { conflict, forbidden, notFound, unauthorized } from "../utils/appError";
+import { forbidden, notFound, unauthorized } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
-/**
- * クエリ有無に応じてユーザー検索または管理者向け一覧取得を行う。
- */
-export const getUsers = asyncHandler(
-	async (req: Request, res: Response) => {
-		const { query } = validateRequest(req, { query: UserListQuerySchema });
-		const { name, email } = query;
+export const getUsers = asyncHandler(async (req: Request, res: Response) => {
+	const { query } = validateRequest(req, { query: UserListQuerySchema });
+	const { name, email } = query;
 
-		if (name || email) {
-			const user = await findUserByNameOrEmailService(name || "", email || "");
-			if (!user) {
-				res.json([]);
-				return;
-			}
-
-			res.json([
-				{
-					id: user.id,
-					name: user.name,
-					email: user.email,
-					role: user.role,
-				},
-			]);
+	if (name || email) {
+		const user = await findUserByNameOrEmailService(name || "", email || "");
+		if (!user) {
+			res.json([]);
 			return;
 		}
 
-		const firebaseUser = req.user;
-		if (!firebaseUser) {
-			throw unauthorized();
-		}
+		res.json([
+			{
+				id: user.id,
+				name: user.name,
+				email: user.email,
+				role: user.role,
+			},
+		]);
+		return;
+	}
 
-		const currentUser = await getUserByFirebaseUidService(firebaseUser.uid);
-		if (!currentUser || currentUser.role !== ROLES.ADMIN) {
-			throw forbidden("Forbidden: admin access required");
-		}
-
-		const users = await getAllUsersService();
-		res.json(users);
-	},
-);
-
-/**
- * 認証済み Firebase ユーザーをアプリケーションユーザーとして登録する。
- */
-export const createUser = asyncHandler(async (req: Request, res: Response) => {
-	const firebaseUser = req.user;
-	if (!firebaseUser) {
+	const googleUser = req.user;
+	if (!googleUser?.sub) {
 		throw unauthorized();
 	}
 
-	const { body } = validateRequest(req, { body: CreateUserBodySchema });
-	const { name, role = ROLES.USER } = body;
+	const currentUser = await getUserByGoogleSubService(googleUser.sub);
+	if (!currentUser || currentUser.role !== ROLES.ADMIN) {
+		throw forbidden("Forbidden: admin access required");
+	}
 
-	const existingUser = await findUserByNameOrEmailService(
-		name,
-		firebaseUser.email || "",
-	);
+	const users = await getAllUsersService();
+	res.json(users);
+});
+
+/**
+ * Google 認証済みユーザーをアプリケーションユーザーとして upsert する。
+ * 初回ログイン時はレコードを作成し、2回目以降は既存レコードを返す。
+ */
+export const createUser = asyncHandler(async (req: Request, res: Response) => {
+	const googleUser = req.user;
+	if (!googleUser?.sub) {
+		throw unauthorized();
+	}
+
+	const existingUser = await getUserByGoogleSubService(googleUser.sub);
 	if (existingUser) {
-		throw conflict("User already exists");
+		res.json({
+			message: "User already exists",
+			user: {
+				id: existingUser.id,
+				name: existingUser.name,
+				email: existingUser.email,
+				role: existingUser.role,
+			},
+		});
+		return;
 	}
 
 	const newUser = await createUserService({
-		name,
-		email: firebaseUser.email || "",
-		role,
-		firebaseUid: firebaseUser.uid,
+		name: googleUser.name || googleUser.email || "Unknown",
+		email: googleUser.email || "",
+		role: ROLES.USER,
+		googleSub: googleUser.sub,
 	});
 
 	res.status(201).json({
@@ -95,17 +90,14 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 	});
 });
 
-/**
- * 認証済みユーザーのプロフィールを返す。
- */
 export const getCurrentUser = asyncHandler(
 	async (req: Request, res: Response) => {
-		const firebaseUser = req.user;
-		if (!firebaseUser) {
+		const googleUser = req.user;
+		if (!googleUser?.sub) {
 			throw unauthorized();
 		}
 
-		const user = await getUserByFirebaseUidService(firebaseUser.uid);
+		const user = await getUserByGoogleSubService(googleUser.sub);
 		if (!user) {
 			throw notFound("User not found");
 		}
@@ -119,9 +111,6 @@ export const getCurrentUser = asyncHandler(
 	},
 );
 
-/**
- * ユーザーを関連データとあわせて削除する。
- */
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
 	const { params } = validateRequest(req, { params: UserIdParamSchema });
 	const { id } = params;

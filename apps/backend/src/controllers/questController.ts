@@ -17,8 +17,13 @@ import {
 	updateQuestService,
 	updateQuestStatusService,
 } from "../services/questService";
-import { getUserByFirebaseUidService } from "../services/userService";
-import { badRequest, forbidden, unauthorized, notFound } from "../utils/appError";
+import { getUserByGoogleSubService } from "../services/userService";
+import {
+	badRequest,
+	forbidden,
+	unauthorized,
+	notFound,
+} from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
@@ -35,11 +40,11 @@ export const getAllQuests = asyncHandler(
 		};
 
 		if (query.includeDeleted) {
-			if (!req.user?.uid) {
+			if (!req.user?.sub) {
 				throw unauthorized();
 			}
 
-			const user = await getUserByFirebaseUidService(req.user.uid);
+			const user = await getUserByGoogleSubService(req.user.sub);
 			if (!user || user.role !== ROLES.ADMIN) {
 				throw forbidden("Forbidden: admin access required");
 			}
@@ -108,8 +113,8 @@ export const createQuest = asyncHandler(async (req: Request, res: Response) => {
 
 	let finalStatus = status || "draft";
 
-	if (req.user?.uid) {
-		const user = await getUserByFirebaseUidService(req.user.uid);
+	if (req.user?.sub) {
+		const user = await getUserByGoogleSubService(req.user.sub);
 
 		if (user) {
 			// 一般ユーザー作成分は自動的に承認待ちへ寄せる。

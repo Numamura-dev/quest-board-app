@@ -6,27 +6,26 @@ import {
 	optionalAuthMiddleware,
 	requireAdmin,
 } from "../../middlewares/auth.middleware";
-import { getUserByFirebaseUidService } from "../../services/userService";
+import { getUserByGoogleSubService } from "../../services/userService";
 import { AppError } from "../../utils/appError";
 
-const mockVerifyIdToken = jest.fn();
-
-jest.mock("../../config/firebase", () => ({
-	__esModule: true,
-	default: {
-		auth: () => ({
-			verifyIdToken: mockVerifyIdToken,
-		}),
+jest.mock("../../config/auth", () => ({
+	oauth2Client: {
+		verifyIdToken: jest.fn(),
 	},
 }));
 
+import { oauth2Client } from "../../config/auth";
+const mockVerifyIdToken = oauth2Client.verifyIdToken as jest.Mock;
+const mockGetPayload = jest.fn();
+
 jest.mock("../../services/userService", () => ({
-	getUserByFirebaseUidService: jest.fn(),
+	getUserByGoogleSubService: jest.fn(),
 }));
 
-const mockedGetUserByFirebaseUidService =
-	getUserByFirebaseUidService as jest.MockedFunction<
-		typeof getUserByFirebaseUidService
+const mockedGetUserByGoogleSubService =
+	getUserByGoogleSubService as jest.MockedFunction<
+		typeof getUserByGoogleSubService
 	>;
 
 const createRequest = (authorization?: string) =>
@@ -40,6 +39,7 @@ const getNextError = (next: jest.Mock): AppError =>
 describe("auth.middleware", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockVerifyIdToken.mockResolvedValue({ getPayload: mockGetPayload });
 	});
 
 	describe("authMiddleware", () => {
@@ -71,12 +71,12 @@ describe("auth.middleware", () => {
 		it("有効トークンの場合は req.user を設定して次へ進む", async () => {
 			const req = createRequest("Bearer valid-token");
 			const next = jest.fn() as NextFunction;
-			const decodedToken = { uid: "firebase-uid-1" };
-			mockVerifyIdToken.mockResolvedValueOnce(decodedToken);
+			const payload = { sub: "google-sub-1", email: "user@example.com" };
+			mockGetPayload.mockReturnValueOnce(payload);
 
 			await authMiddleware(req, {} as Response, next);
 
-			expect(req.user).toEqual(decodedToken);
+			expect(req.user).toEqual(payload);
 			expect(next).toHaveBeenCalledWith();
 		});
 	});
@@ -122,10 +122,10 @@ describe("auth.middleware", () => {
 		it("アプリユーザー未登録の場合は 403 を返す", async () => {
 			const req = {
 				...createRequest(),
-				user: { uid: "missing-user" },
+				user: { sub: "missing-user-sub" },
 			} as Request;
 			const next = jest.fn() as NextFunction;
-			mockedGetUserByFirebaseUidService.mockResolvedValueOnce(null);
+			mockedGetUserByGoogleSubService.mockResolvedValueOnce(null);
 
 			await requireAdmin(req, {} as Response, next);
 
@@ -138,11 +138,11 @@ describe("auth.middleware", () => {
 		it("管理者ユーザーの場合は通過し req.appUser に格納される", async () => {
 			const req = {
 				...createRequest(),
-				user: { uid: "admin-user" },
+				user: { sub: "admin-user-sub" },
 			} as Request;
 			const next = jest.fn() as NextFunction;
 			const adminUser = { id: 1, role: ROLES.ADMIN } as User;
-			mockedGetUserByFirebaseUidService.mockResolvedValueOnce(adminUser);
+			mockedGetUserByGoogleSubService.mockResolvedValueOnce(adminUser);
 
 			await requireAdmin(req, {} as Response, next);
 

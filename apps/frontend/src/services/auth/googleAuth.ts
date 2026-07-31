@@ -7,7 +7,21 @@ export const setIdToken = (token: string): void => {
 
 export const getIdToken = (): string | null => {
 	if (typeof window === "undefined") return null;
-	return localStorage.getItem(TOKEN_KEY);
+	const token = localStorage.getItem(TOKEN_KEY);
+	if (!token) return null;
+
+	try {
+		const payload = JSON.parse(atob(token.split(".")[1]));
+		if (payload.exp && Math.floor(Date.now() / 1000) > payload.exp) {
+			localStorage.removeItem(TOKEN_KEY);
+			return null;
+		}
+	} catch {
+		localStorage.removeItem(TOKEN_KEY);
+		return null;
+	}
+
+	return token;
 };
 
 export const clearIdToken = (): void => {

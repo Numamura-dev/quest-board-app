@@ -7,6 +7,7 @@ import {
 	findUserByNameOrEmailService,
 	getAllUsersService,
 	getUserByGoogleSubService,
+	linkGoogleSubToExistingUserService,
 } from "../services/userService";
 import { forbidden, notFound, unauthorized } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -49,24 +50,29 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * Google 認証済みユーザーをアプリケーションユーザーとして upsert する。
- * 初回ログイン時はレコードを作成し、2回目以降は既存レコードを返す。
+ * Google 認証済みユーザーをアプリケーションユーザーとして登録する。
+ * - google_sub が一致する既存ユーザー → そのまま返す
+ * - google_sub 未設定だが email が一致する既存ユーザー → google_sub を紐付けて返す
+ * - 新規ユーザー → 作成して返す
  */
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
 	const googleUser = req.user;
-	if (!googleUser?.sub) {
+	if (!googleUser?.sub || !googleUser?.email) {
 		throw unauthorized();
 	}
 
-	const existingUser = await getUserByGoogleSubService(googleUser.sub);
-	if (existingUser) {
+	const linked = await linkGoogleSubToExistingUserService(
+		googleUser.sub,
+		googleUser.email,
+	);
+	if (linked) {
 		res.json({
 			message: "User already exists",
 			user: {
-				id: existingUser.id,
-				name: existingUser.name,
-				email: existingUser.email,
-				role: existingUser.role,
+				id: linked.id,
+				name: linked.name,
+				email: linked.email,
+				role: linked.role,
 			},
 		});
 		return;
@@ -74,7 +80,7 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
 
 	const newUser = await createUserService({
 		name: googleUser.name || googleUser.email || "Unknown",
-		email: googleUser.email || "",
+		email: googleUser.email,
 		role: ROLES.USER,
 		googleSub: googleUser.sub,
 	});

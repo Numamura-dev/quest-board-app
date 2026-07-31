@@ -34,6 +34,30 @@ export const getUserByGoogleSubService = async (googleSub: string) => {
 	}
 };
 
+/**
+ * google_sub で検索し、見つからなければ email で既存ユーザーを検索して紐付ける。
+ * Firebase から移行した既存ユーザーが Google ログイン時に unique 制約で弾かれないための処理。
+ */
+export const linkGoogleSubToExistingUserService = async (
+	googleSub: string,
+	email: string,
+) => {
+	try {
+		const byGoogleSub = await userDataAccessor.findByGoogleSub(googleSub);
+		if (byGoogleSub) return byGoogleSub;
+
+		const byEmail = await userDataAccessor.findByEmail(email);
+		if (byEmail) {
+			return await userDataAccessor.update(byEmail.id, { google_sub: googleSub });
+		}
+
+		return null;
+	} catch (error) {
+		logger.error({ err: error, googleSub, email }, "Google Sub 紐付けエラー");
+		throw error;
+	}
+};
+
 export const createUserService = async (userData: {
 	name: string;
 	email: string;

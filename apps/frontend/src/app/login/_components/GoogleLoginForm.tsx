@@ -10,7 +10,7 @@ const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
 export default function GoogleLoginForm() {
 	const router = useRouter();
-	const { login } = useAuth();
+	const { login, logout } = useAuth();
 
 	const handleSuccess = async (response: CredentialResponse) => {
 		if (!response.credential) return;
@@ -19,11 +19,12 @@ export default function GoogleLoginForm() {
 
 		try {
 			await authenticatedApiClient.post("/users", {});
+			router.push("/");
 		} catch (error) {
 			console.error("ユーザー同期エラー:", error);
+			logout();
+			alert("ログインに失敗しました。再度お試しください。");
 		}
-
-		router.push("/");
 	};
 
 	const handleError = () => {

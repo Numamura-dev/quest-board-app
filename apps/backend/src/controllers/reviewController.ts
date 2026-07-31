@@ -17,12 +17,7 @@ import {
 	updateReviewService,
 } from "../services/reviewService";
 import { getUserByGoogleSubService } from "../services/userService";
-import {
-	badRequest,
-	forbidden,
-	notFound,
-	unauthorized,
-} from "../utils/appError";
+import { forbidden, notFound, unauthorized } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
@@ -66,25 +61,14 @@ export const createReview = asyncHandler(
 		const { questId } = params;
 		const { rating, comment } = body;
 
-		try {
-			const review = await createReviewService({
-				questId,
-				reviewer_id: currentUser.id,
-				rating,
-				comment,
-			});
+		const review = await createReviewService({
+			questId,
+			reviewer_id: currentUser.id,
+			rating,
+			comment,
+		});
 
-			res.status(201).json(review);
-		} catch (error) {
-			if (
-				error instanceof Error &&
-				error.message.includes("既にレビューを投稿済み")
-			) {
-				throw badRequest(error.message);
-			}
-
-			throw error;
-		}
+		res.status(201).json(review);
 	},
 );
 

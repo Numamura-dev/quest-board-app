@@ -7,7 +7,6 @@ import {
 	getAllUsersForAdminService,
 	updateUserRoleService,
 } from "../services/adminUserService";
-import { notFound } from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
@@ -33,16 +32,7 @@ export const updateUserRole = asyncHandler(
 		const { userId } = params;
 		const { role } = body;
 
-		let updatedUser: Awaited<ReturnType<typeof updateUserRoleService>>;
-		try {
-			updatedUser = await updateUserRoleService(userId, role);
-		} catch (error) {
-			if (error instanceof Error && error.message === "User not found") {
-				throw notFound(error.message);
-			}
-
-			throw error;
-		}
+		const updatedUser = await updateUserRoleService(userId, role);
 
 		res.json({
 			message: "ユーザーのロールが正常に更新されました",

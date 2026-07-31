@@ -1,10 +1,12 @@
 "use client";
 
+import { useToast } from "@/components/providers/ToastProvider";
 import {
 	getQuestStatusBadgeClass,
 	getQuestStatusLabel,
 } from "@/constants/questPresentation";
 import { useAuth } from "@/hooks/useAuth";
+import { getUserFacingErrorMessage } from "@/services/apiError";
 import type { Quest } from "@quest-board/types";
 import {
 	AlertCircle,
@@ -43,6 +45,7 @@ type QuestCategory = "education" | "security" | "event" | "innovation";
 
 const AdminDashboard = () => {
 	const { loading: authLoading, isAuthenticated } = useAuth();
+	const { showToast } = useToast();
 	const [activeTab, setActiveTab] = useState<"dashboard" | "quests" | "users">(
 		"dashboard",
 	);
@@ -57,21 +60,9 @@ const AdminDashboard = () => {
 	const [questToDelete, setQuestToDelete] = useState<Quest | null>(null);
 	const [questToEdit, setQuestToEdit] = useState<Quest | null>(null);
 	const [userToDelete, setUserToDelete] = useState<UserResponse | null>(null);
-	const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-	// トースト通知を表示する関数
-	const showToast = (message: string) => {
-		setToastMessage(message);
-		setTimeout(() => {
-			setToastMessage(null);
-		}, 3000); // 3秒後に自動で非表示
-	};
 
 	const getErrorMessage = (error: unknown) => {
-		if (error instanceof Error && error.message.startsWith("HTTP 403")) {
-			return "管理者権限が必要です";
-		}
-		return "データの取得に失敗しました";
+		return getUserFacingErrorMessage(error, "データの取得に失敗しました。");
 	};
 
 	// クエストデータとユーザーデータを取得
@@ -104,13 +95,14 @@ const AdminDashboard = () => {
 			} catch (err) {
 				console.error("Failed to fetch data:", err);
 				setError(getErrorMessage(err));
+				showToast(getErrorMessage(err), "error");
 			} finally {
 				setLoading(false);
 			}
 		};
 
 		fetchData();
-	}, [authLoading, isAuthenticated]);
+	}, [authLoading, isAuthenticated, showToast]);
 
 	const dashboardStats = {
 		totalQuests: quests.length,
@@ -166,38 +158,46 @@ const AdminDashboard = () => {
 		try {
 			if (action === "approve") {
 				await questService.updateQuestStatus(questId.toString(), "active");
+				showToast("クエストを承認しました。", "success");
 			} else if (action === "reject") {
 				await questService.updateQuestStatus(questId.toString(), "draft");
 				// 却下時のトースト通知表示（API呼び出し成功後）
-				showToast("クエストを却下しました。ステータスが下書きに戻されました。");
+				showToast(
+					"クエストを却下しました。ステータスが下書きに戻されました。",
+					"success",
+				);
 			} else if (action === "hide") {
 				await questService.updateQuestStatus(questId.toString(), "inactive");
+				showToast("クエストを非表示にしました。", "success");
 			} else if (action === "publish") {
 				await questService.updateQuestStatus(questId.toString(), "active");
+				showToast("クエストを公開しました。", "success");
 			} else if (action === "submit_for_approval") {
 				await questService.updateQuestStatus(questId.toString(), "pending");
 				// 承認待ち申請時のトースト通知表示
 				showToast(
 					"クエストを承認待ちにしました。管理者の承認をお待ちください。",
+					"success",
 				);
 			} else if (action === "start_progress") {
 				await questService.updateQuestStatus(questId.toString(), "in_progress");
 				// 進行中開始時のトースト通知表示
-				showToast("クエストを進行中にしました。");
+				showToast("クエストを進行中にしました。", "success");
 			} else if (action === "complete") {
 				await questService.updateQuestStatus(questId.toString(), "completed");
 				// 完了時のトースト通知表示
-				showToast("クエストを完了にしました。");
+				showToast("クエストを完了にしました。", "success");
 			} else if (action === "reactivate") {
 				await questService.reactivateQuest(questId.toString());
+				showToast("クエストを再有効化しました。", "success");
 			} else if (action === "submit_for_approval") {
 				await questService.submitQuestForApproval(questId.toString());
 				// 承認待ち申請時のトースト通知表示
-				showToast("クエストを承認待ちに申請しました。");
+				showToast("クエストを承認待ちに申請しました。", "success");
 			} else if (action === "restore") {
 				await questService.restoreQuest(questId.toString());
 				// 復元時のトースト通知表示
-				showToast("クエストを復元しました。");
+				showToast("クエストを復元しました。", "success");
 			} else if (action === "edit") {
 				const quest = quests.find((q) => q.id === questId);
 				if (quest) {
@@ -218,7 +218,10 @@ const AdminDashboard = () => {
 			setSelectedQuest(null);
 		} catch (err) {
 			console.error(`Failed to ${action} quest:`, err);
-			setError(`クエストの${action}に失敗しました`);
+			showToast(
+				getUserFacingErrorMessage(err, `クエストの${action}に失敗しました。`),
+				"error",
+			);
 		}
 	};
 
@@ -236,7 +239,7 @@ const AdminDashboard = () => {
 				}
 			} else if (action === "updateRole" && newRole) {
 				await userService.updateUserRole(userId, newRole);
-				showToast(`ユーザーのロールを${newRole}に変更しました`);
+				showToast(`ユーザーのロールを${newRole}に変更しました。`, "success");
 
 				// ユーザーリストを再取得
 				const userData = await userService.getAllUsers();
@@ -244,7 +247,10 @@ const AdminDashboard = () => {
 			}
 		} catch (error) {
 			console.error("ユーザーアクションエラー:", error);
-			showToast("操作に失敗しました");
+			showToast(
+				getUserFacingErrorMessage(error, "操作に失敗しました。"),
+				"error",
+			);
 		}
 	};
 
@@ -259,9 +265,13 @@ const AdminDashboard = () => {
 			setQuests(questData);
 			setQuestToDelete(null);
 			setSelectedQuest(null);
+			showToast("クエストを削除しました。", "success");
 		} catch (err) {
 			console.error("Failed to delete quest:", err);
-			setError("クエストの削除に失敗しました");
+			showToast(
+				getUserFacingErrorMessage(err, "クエストの削除に失敗しました。"),
+				"error",
+			);
 		}
 	};
 
@@ -275,10 +285,13 @@ const AdminDashboard = () => {
 			const userData = await userService.getAllUsers();
 			setUsers(userData);
 			setUserToDelete(null);
-			showToast("ユーザーを削除しました");
+			showToast("ユーザーを削除しました。", "success");
 		} catch (err) {
 			console.error("Failed to delete user:", err);
-			setError("ユーザーの削除に失敗しました");
+			showToast(
+				getUserFacingErrorMessage(err, "ユーザーの削除に失敗しました。"),
+				"error",
+			);
 		}
 	};
 
@@ -381,10 +394,15 @@ const AdminDashboard = () => {
 				// クエストリストを再取得（管理者用：削除済みも含む）
 				const questData = await questService.getAllQuestsIncludingDeleted();
 				setQuests(questData);
+				showToast("クエストを作成しました。", "success");
 				onClose();
 			} catch (err) {
 				console.error("Failed to create quest:", err);
-				setError("クエストの作成に失敗しました");
+				showToast(
+					getUserFacingErrorMessage(err, "クエストの作成に失敗しました。"),
+					"error",
+				);
+				throw err;
 			}
 		};
 
@@ -450,11 +468,15 @@ const AdminDashboard = () => {
 				// クエストリストを再取得（管理者用：削除済みも含む）
 				const questData = await questService.getAllQuestsIncludingDeleted();
 				setQuests(questData);
-				showToast("クエストを更新しました。");
+				showToast("クエストを更新しました。", "success");
 				onClose();
 			} catch (err) {
 				console.error("Failed to update quest:", err);
-				setError("クエストの更新に失敗しました");
+				showToast(
+					getUserFacingErrorMessage(err, "クエストの更新に失敗しました。"),
+					"error",
+				);
+				throw err;
 			}
 		};
 
@@ -1124,16 +1146,6 @@ const AdminDashboard = () => {
 					onConfirm={handleUserDeleteConfirm}
 					onCancel={() => setUserToDelete(null)}
 				/>
-			)}
-
-			{/* トースト通知 */}
-			{toastMessage && (
-				<div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg animate-pulse">
-					<div className="flex items-center gap-2">
-						<Check className="w-5 h-5" />
-						<span>{toastMessage}</span>
-					</div>
-				</div>
 			)}
 		</div>
 	);

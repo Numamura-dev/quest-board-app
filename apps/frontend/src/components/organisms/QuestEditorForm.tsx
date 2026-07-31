@@ -1,5 +1,6 @@
 "use client";
 
+import { getValidationFieldErrors } from "@/services/apiError";
 import {
 	QUEST_STATUS_LABELS,
 	QUEST_STATUS_VALUES,
@@ -40,6 +41,15 @@ type QuestEditorFormProps = {
 
 const fieldBaseClassName =
 	"w-full rounded-lg border-2 border-amber-300 bg-amber-50 px-3 py-2 text-slate-800 focus:border-yellow-400 focus:outline-none";
+
+const apiFieldMap: Record<string, keyof QuestFormErrors> = {
+	title: "title",
+	description: "description",
+	start_date: "start_date",
+	end_date: "end_date",
+	maxParticipants: "maxParticipants",
+	max_participants: "maxParticipants",
+};
 
 export const QuestEditorForm: React.FC<QuestEditorFormProps> = ({
 	title,
@@ -182,6 +192,21 @@ export const QuestEditorForm: React.FC<QuestEditorFormProps> = ({
 			window.localStorage.removeItem(draftStorageKey);
 			setInitialSerialized(JSON.stringify(formData));
 			setIsDraftRestored(false);
+		} catch (error) {
+			const fieldErrors = getValidationFieldErrors(error);
+			const nextErrors = Object.entries(fieldErrors).reduce<QuestFormErrors>(
+				(acc, [field, message]) => {
+					const mappedField = apiFieldMap[field];
+					if (mappedField) {
+						acc[mappedField] = message;
+					}
+					return acc;
+				},
+				{},
+			);
+			if (Object.keys(nextErrors).length > 0) {
+				setErrors(nextErrors);
+			}
 		} finally {
 			setIsSubmitting(false);
 		}

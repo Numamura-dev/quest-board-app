@@ -1,6 +1,6 @@
 import { API_CONFIG } from "../constants/config";
-import { getIdToken } from "./auth/googleAuth";
 import { ApiError, isApiErrorResponse } from "./apiError";
+import { getIdToken } from "./auth/googleAuth";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -80,11 +80,15 @@ export async function httpRequest<TResponse = unknown, TBody = unknown>(
 			const legacyBody = errorBody as LegacyErrorResponseBody | null;
 			const message =
 				legacyBody?.error || legacyBody?.message || res.statusText;
-			throw new Error(`HTTP ${res.status}: ${message}`);
+			throw new ApiError(message, getCodeForStatus(res.status), res.status);
 		}
 
 		const text = await res.text().catch(() => "");
-		throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+		throw new ApiError(
+			text || res.statusText,
+			getCodeForStatus(res.status),
+			res.status,
+		);
 	}
 
 	const contentType = res.headers.get("content-type") || "";
@@ -100,7 +104,7 @@ export async function authenticatedHttpRequest<
 >(options: RequestOptions<TBody>): Promise<TResponse> {
 	const idToken = getIdToken();
 	if (!idToken) {
-		throw new Error("User not authenticated");
+		throw new ApiError("User not authenticated", "UNAUTHORIZED", 401);
 	}
 
 	return httpRequest<TResponse, TBody>({
@@ -124,6 +128,15 @@ export const apiClient = {
 	delete: <TResponse>(path: string) =>
 		httpRequest<TResponse>({ path, method: "DELETE" }),
 };
+
+function getCodeForStatus(status: number) {
+	if (status === 401) return "UNAUTHORIZED";
+	if (status === 403) return "FORBIDDEN";
+	if (status === 404) return "NOT_FOUND";
+	if (status === 409) return "CONFLICT";
+	if (status >= 500) return "INTERNAL_SERVER_ERROR";
+	return "UNKNOWN_ERROR";
+}
 
 export const authenticatedApiClient = {
 	get: <TResponse>(path: string, query?: RequestOptions["query"]) =>

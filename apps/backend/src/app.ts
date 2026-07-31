@@ -11,7 +11,7 @@ import mypageRouter from "./routes/mypage";
 import questsRouter from "./routes/quests";
 import reviewsRouter from "./routes/reviews";
 import tagsRouter from "./routes/tags";
-import testRouter from "./routes/test";
+import testRouter from "./routes/e2eToken";
 import usersRouter from "./routes/users";
 
 const app = express();

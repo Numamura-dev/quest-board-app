@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import type { User } from "@prisma/client";
 import type { NextFunction, Request, Response } from "express";
 import type { TokenPayload } from "google-auth-library";
@@ -16,6 +17,29 @@ declare global {
 	}
 }
 
+// 非本番環境でのみ有効なテスト用トークン検証（E2E テスト専用）
+function verifyTestToken(idToken: string): TokenPayload | null {
+	if (process.env.NODE_ENV === "production") return null;
+	try {
+		const parts = idToken.split(".");
+		if (parts.length !== 3) return null;
+		const header = JSON.parse(Buffer.from(parts[0], "base64").toString());
+		if (header.alg !== "HMAC-TEST") return null;
+		const secret =
+			process.env.TEST_TOKEN_SECRET ?? "dev-only-secret-do-not-use-in-prod";
+		const expected = crypto
+			.createHmac("sha256", secret)
+			.update(`${parts[0]}.${parts[1]}`)
+			.digest("base64");
+		if (expected !== parts[2]) return null;
+		return JSON.parse(
+			Buffer.from(parts[1], "base64").toString(),
+		) as TokenPayload;
+	} catch {
+		return null;
+	}
+}
+
 export const authMiddleware = async (
 	req: Request,
 	_res: Response,
@@ -28,6 +52,12 @@ export const authMiddleware = async (
 	}
 
 	const idToken = authHeader.split("Bearer ")[1];
+
+	const testPayload = verifyTestToken(idToken);
+	if (testPayload) {
+		req.user = testPayload;
+		return next();
+	}
 
 	try {
 		const ticket = await oauth2Client.verifyIdToken({
@@ -63,6 +93,12 @@ export const optionalAuthMiddleware = async (
 	}
 
 	const idToken = authHeader.split("Bearer ")[1];
+
+	const testPayload = verifyTestToken(idToken);
+	if (testPayload) {
+		req.user = testPayload;
+		return next();
+	}
 
 	try {
 		const ticket = await oauth2Client.verifyIdToken({

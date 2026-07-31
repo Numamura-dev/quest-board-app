@@ -96,6 +96,38 @@ describe("reviewController", () => {
 		expect(next).not.toHaveBeenCalled();
 	});
 
+	it("createReview は重複レビューの AppError をそのまま next へ渡す", async () => {
+		mockValidateRequest.mockReturnValue({
+			params: { questId: 1 },
+			body: { rating: 5, comment: "test" },
+			query: {},
+		} as never);
+		mockGetUserByGoogleSubService.mockResolvedValueOnce({
+			id: 10,
+			role: ROLES.USER,
+		} as never);
+		mockCreateReviewService.mockRejectedValueOnce(
+			new AppError(
+				"このクエストには既にレビューを投稿済みです。",
+				409,
+				"CONFLICT",
+			) as never,
+		);
+
+		const req = { user: { sub: "google-sub-10" } } as unknown as Request;
+		const res = createResponse();
+		const next = jest.fn();
+
+		createReview(req, res, next as unknown as NextFunction);
+		await waitForAsyncHandler();
+
+		expect(next).toHaveBeenCalled();
+		const error = next.mock.calls[0][0] as AppError;
+		expect(error).toBeInstanceOf(AppError);
+		expect(error.statusCode).toBe(409);
+		expect(error.code).toBe("CONFLICT");
+	});
+
 	it("updateReview はレビュー所有者以外の更新を 403 で拒否する", async () => {
 		mockValidateRequest.mockReturnValue({
 			params: { reviewId: 1 },

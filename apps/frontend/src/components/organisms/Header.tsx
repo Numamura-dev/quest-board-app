@@ -1,12 +1,14 @@
 "use client";
 
-import type React from "react";
-import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
-import { Sword, Bell, User, Settings, LogOut, Menu, X } from "lucide-react";
+import { useToast } from "@/components/providers/ToastProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { getUserFacingErrorMessage } from "@/services/apiError";
 import { userService } from "@/services/user";
+import { Bell, LogOut, Menu, Settings, Sword, User, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface AppUser {
 	name?: string;
@@ -19,6 +21,7 @@ export const Header: React.FC = () => {
 	const router = useRouter();
 	const pathname = usePathname();
 	const { user: googleUser, logout } = useAuth();
+	const { showToast } = useToast();
 	const [appUser, setAppUser] = useState<AppUser | null>(null);
 	const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 	const mobileMenuRef = useRef<HTMLElement | null>(null);
@@ -49,10 +52,13 @@ export const Header: React.FC = () => {
 	const handleLogout = async () => {
 		try {
 			logout();
+			showToast("ログアウトしました。", "success");
 			router.push("/");
 		} catch (error: unknown) {
-			const message = error instanceof Error ? error.message : String(error);
-			alert(`ログアウトエラー: ${message}`);
+			showToast(
+				getUserFacingErrorMessage(error, "ログアウトに失敗しました。"),
+				"error",
+			);
 		}
 	};
 

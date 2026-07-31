@@ -9,6 +9,7 @@ import {
 	filterQuests,
 	getSuggestedQuests,
 } from "@/components/organisms/questListFilters";
+import { useToast } from "@/components/providers/ToastProvider";
 import {
 	HIDDEN_QUEST_STATUSES,
 	getQuestDifficultyBadgeClass,
@@ -16,6 +17,7 @@ import {
 } from "@/constants/questPresentation";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
+import { getUserFacingErrorMessage } from "@/services/apiError";
 import { questService } from "@/services/quest";
 import { reviewService } from "@/services/review";
 import { userService } from "@/services/user";
@@ -90,12 +92,14 @@ const QuestList: React.FC = () => {
 	>(new Map());
 	const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 	const searchContainerRef = useRef<HTMLDivElement | null>(null);
+	const reviewCheckToastShownRef = useRef(false);
 	const {
 		history: searchHistory,
 		addHistory,
 		clearHistory,
 	} = useSearchHistory();
 	const { user, isAuthenticated } = useAuth();
+	const { showToast } = useToast();
 	const router = useRouter();
 
 	useEffect(() => {
@@ -106,12 +110,16 @@ const QuestList: React.FC = () => {
 			} catch (err) {
 				console.error(err);
 				setQuests([]);
+				showToast(
+					getUserFacingErrorMessage(err, "クエスト一覧の取得に失敗しました。"),
+					"error",
+				);
 			} finally {
 				setLoading(false);
 			}
 		};
 		fetchQuests();
-	}, []);
+	}, [showToast]);
 
 	useEffect(() => {
 		const timerId = window.setTimeout(() => {
@@ -135,11 +143,12 @@ const QuestList: React.FC = () => {
 			} catch (error) {
 				console.error("QuestList: ユーザーID取得エラー:", error);
 				setCurrentUserId(null);
+				showToast("ユーザー情報の取得に失敗しました。", "error");
 			}
 		};
 
 		fetchUserId();
-	}, [user, isAuthenticated]);
+	}, [user, isAuthenticated, showToast]);
 
 	// クエストデータが取得されたら、各クエストのボタンアクションを決定
 	useEffect(() => {
@@ -220,6 +229,10 @@ const QuestList: React.FC = () => {
 			return response.exists;
 		} catch (error) {
 			console.error("レビュー投稿状況確認エラー:", error);
+			if (!reviewCheckToastShownRef.current) {
+				showToast("レビュー投稿状況を確認できませんでした。", "info");
+				reviewCheckToastShownRef.current = true;
+			}
 			return false;
 		}
 	};

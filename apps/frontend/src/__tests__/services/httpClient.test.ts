@@ -1,5 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { httpRequest, authenticatedHttpRequest } from "@/services/httpClient";
+import { ApiError } from "@/services/apiError";
+import { authenticatedHttpRequest, httpRequest } from "@/services/httpClient";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const mockGetIdToken = vi.fn<() => string | null>();
+
+vi.mock("@/services/auth/googleAuth", () => ({
+	getIdToken: () => mockGetIdToken(),
+}));
 
 // config モック
 vi.mock("@/constants/config", () => ({
@@ -88,7 +95,7 @@ describe("httpRequest", () => {
 		);
 	});
 
-	it("HTTP エラー時に Error をスロー（JSON レスポンス）", async () => {
+	it("HTTP エラー時に ApiError をスロー（旧 JSON レスポンス）", async () => {
 		vi.mocked(fetch).mockResolvedValueOnce(
 			new Response(JSON.stringify({ message: "Not Found" }), {
 				status: 404,
@@ -96,12 +103,15 @@ describe("httpRequest", () => {
 			}),
 		);
 
-		await expect(httpRequest({ path: "/quests/999" })).rejects.toThrow(
-			"HTTP 404: Not Found",
-		);
+		await expect(httpRequest({ path: "/quests/999" })).rejects.toMatchObject({
+			name: "ApiError",
+			code: "NOT_FOUND",
+			status: 404,
+			message: "Not Found",
+		});
 	});
 
-	it("HTTP エラー時に Error をスロー（テキストレスポンス）", async () => {
+	it("HTTP エラー時に ApiError をスロー（テキストレスポンス）", async () => {
 		vi.mocked(fetch).mockResolvedValueOnce(
 			new Response("Internal Server Error", {
 				status: 500,
@@ -109,14 +119,74 @@ describe("httpRequest", () => {
 			}),
 		);
 
-		await expect(httpRequest({ path: "/quests" })).rejects.toThrow("HTTP 500");
+		await expect(httpRequest({ path: "/quests" })).rejects.toMatchObject({
+			name: "ApiError",
+			code: "INTERNAL_SERVER_ERROR",
+			status: 500,
+			message: "Internal Server Error",
+		});
+	});
+
+	it("標準エラーレスポンスを ApiError として保持する", async () => {
+		vi.mocked(fetch).mockResolvedValueOnce(
+			new Response(
+				JSON.stringify({
+					success: false,
+					error: "Invalid title",
+					code: "VALIDATION_ERROR",
+					details: [{ field: "title", message: "タイトルは必須です" }],
+				}),
+				{
+					status: 400,
+					headers: { "Content-Type": "application/json" },
+				},
+			),
+		);
+
+		await expect(httpRequest({ path: "/quests" })).rejects.toMatchObject({
+			name: "ApiError",
+			code: "VALIDATION_ERROR",
+			status: 400,
+			details: [{ field: "title", message: "タイトルは必須です" }],
+		});
 	});
 });
 
 describe("authenticatedHttpRequest", () => {
-	it("currentUser が null の場合に Error をスロー", async () => {
-		await expect(authenticatedHttpRequest({ path: "/quests" })).rejects.toThrow(
-			"User not authenticated",
+	beforeEach(() => {
+		mockGetIdToken.mockReturnValue(null);
+	});
+
+	it("ID token がない場合に ApiError をスロー", async () => {
+		await expect(authenticatedHttpRequest({ path: "/quests" })).rejects.toEqual(
+			expect.any(ApiError),
+		);
+		await expect(
+			authenticatedHttpRequest({ path: "/quests" }),
+		).rejects.toMatchObject({
+			code: "UNAUTHORIZED",
+			status: 401,
+		});
+	});
+
+	it("ID token を Authorization ヘッダーに付与する", async () => {
+		mockGetIdToken.mockReturnValue("google-token");
+		vi.mocked(fetch).mockResolvedValueOnce(
+			new Response(JSON.stringify({ ok: true }), {
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+			}),
+		);
+
+		await authenticatedHttpRequest({ path: "/users/me" });
+
+		expect(fetch).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({
+				headers: expect.objectContaining({
+					Authorization: "Bearer google-token",
+				}),
+			}),
 		);
 	});
 });

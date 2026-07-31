@@ -2,7 +2,12 @@ import type { Request, Response } from "express";
 import { QuestJoinParamSchema } from "../schemas/api";
 import { addUserToQuest } from "../services/questJoinService";
 import { getUserByGoogleSubService } from "../services/userService";
-import { badRequest, notFound, unauthorized } from "../utils/appError";
+import {
+	badRequest,
+	conflict,
+	notFound,
+	unauthorized,
+} from "../utils/appError";
 import { asyncHandler } from "../utils/asyncHandler";
 import { validateRequest } from "../utils/validate";
 
@@ -25,16 +30,17 @@ export const joinQuest = asyncHandler(async (req: Request, res: Response) => {
 
 	const result = await addUserToQuest(user.id, questId);
 	if (!result || !result.success) {
-		const errorMessage =
-			result?.reason === "duplicate"
-				? "既に参加しています"
-				: result?.reason === "full"
-					? "参加人数が上限に達しています"
-					: result?.reason === "not_found"
-						? "クエストが見つかりません"
-						: "参加に失敗しました";
+		if (result?.reason === "duplicate") {
+			throw conflict("既に参加しています");
+		}
+		if (result?.reason === "full") {
+			throw conflict("参加人数が上限に達しています");
+		}
+		if (result?.reason === "not_found") {
+			throw notFound("クエストが見つかりません");
+		}
 
-		throw badRequest(errorMessage);
+		throw badRequest("参加に失敗しました");
 	}
 
 	res.json({ success: true, message: "クエストに参加しました！" });

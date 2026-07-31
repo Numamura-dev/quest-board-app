@@ -4,6 +4,7 @@ import {
 	ReviewDataAccessor,
 	type UpdateReviewData,
 } from "../dataAccessor/dbAccessor";
+import { conflict } from "../utils/appError";
 
 const reviewDataAccessor = new ReviewDataAccessor();
 
@@ -41,7 +42,7 @@ export const createReviewService = async (data: CreateReviewData) => {
 		);
 
 		if (existingReview) {
-			throw new Error("このクエストには既にレビューを投稿済みです。");
+			throw conflict("このクエストには既にレビューを投稿済みです。");
 		}
 
 		const review = await reviewDataAccessor.create(data);

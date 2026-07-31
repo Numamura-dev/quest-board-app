@@ -1,5 +1,7 @@
 "use client";
 
+import { useToast } from "@/components/providers/ToastProvider";
+import { getUserFacingErrorMessage } from "@/services/apiError";
 import { authenticatedApiClient } from "@/services/httpClient";
 import {
 	Box,
@@ -24,6 +26,8 @@ const QuestJoinDialog: React.FC<QuestJoinDialogProps> = ({
 	isOpen,
 	onClose,
 }) => {
+	const { showToast } = useToast();
+
 	if (!quest) return null;
 
 	const currentParticipants = quest._count?.quest_participants || 0;
@@ -45,19 +49,18 @@ const QuestJoinDialog: React.FC<QuestJoinDialogProps> = ({
 			>(`/quests/${quest.id}/participants`, {});
 
 			if (data.success) {
-				alert("クエストに参加しました！");
+				showToast("クエストに参加しました。", "success");
 				onClose(); // ダイアログを閉じる
 				// 参加者数更新など必要なら state を更新
 			} else {
-				alert(data.message || "参加できませんでした");
+				showToast(data.message || "参加できませんでした。", "error");
 			}
 		} catch (err) {
 			console.error(err);
-			if (err instanceof Error && err.message === "User not authenticated") {
-				alert("ログイン状態を確認してください");
-				return;
-			}
-			alert("参加に失敗しました");
+			showToast(
+				getUserFacingErrorMessage(err, "参加に失敗しました。"),
+				"error",
+			);
 		}
 	};
 

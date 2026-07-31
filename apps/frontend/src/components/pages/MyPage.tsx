@@ -1,19 +1,22 @@
 "use client";
 
-import type React from "react";
-import { useEffect, useState } from "react";
-import UserProfile from "../organisms/UserProfile";
-import QuestHistory from "../organisms/QuestHistory";
-import NotificationList from "../organisms/NotificationList";
+import { useToast } from "@/components/providers/ToastProvider";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyPageData } from "@/hooks/useMyPageData";
+import { getUserFacingErrorMessage } from "@/services/apiError";
 import { userService } from "@/services/user";
 import type { UserResponse } from "@/services/user";
-import { useMyPageData } from "@/hooks/useMyPageData";
+import type React from "react";
+import { useEffect, useState } from "react";
+import NotificationList from "../organisms/NotificationList";
+import QuestHistory from "../organisms/QuestHistory";
+import UserProfile from "../organisms/UserProfile";
 
 const MyPage: React.FC = () => {
 	const { user: authUser } = useAuth();
 	const [user, setUser] = useState<UserResponse | null>(null);
 	const { notifications, questGroups } = useMyPageData();
+	const { showToast } = useToast();
 
 	// 認証ユーザーが確定・変化したらDBユーザーを取得（ヘッダーと同様）
 	useEffect(() => {
@@ -28,12 +31,16 @@ const MyPage: React.FC = () => {
 				}
 			} catch (e) {
 				console.error("/users/me の取得に失敗しました", e);
+				showToast(
+					getUserFacingErrorMessage(e, "ユーザー情報の取得に失敗しました。"),
+					"error",
+				);
 			}
 		})();
 		return () => {
 			cancelled = true;
 		};
-	}, [authUser]);
+	}, [authUser, showToast]);
 
 	return (
 		<main className="min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 px-6 py-10">

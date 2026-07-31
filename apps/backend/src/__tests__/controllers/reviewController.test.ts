@@ -45,7 +45,7 @@ const mockDeleteReviewService = deleteReviewService as jest.MockedFunction<
 const mockGetReviewByIdService = getReviewByIdService as jest.MockedFunction<
 	typeof getReviewByIdService
 >;
-const mockGetUserByFirebaseUidService =
+const mockGetUserByGoogleSubService =
 	getUserByGoogleSubService as jest.MockedFunction<
 		typeof getUserByGoogleSubService
 	>;
@@ -73,7 +73,7 @@ describe("reviewController", () => {
 			body: { reviewer_id: 999, rating: 5, comment: "test" },
 			query: {},
 		} as never);
-		mockGetUserByFirebaseUidService.mockResolvedValueOnce({
+		mockGetUserByGoogleSubService.mockResolvedValueOnce({
 			id: 10,
 			role: ROLES.USER,
 		} as never);
@@ -102,7 +102,7 @@ describe("reviewController", () => {
 			body: { rating: 3, comment: "updated" },
 			query: {},
 		} as never);
-		mockGetUserByFirebaseUidService.mockResolvedValueOnce({
+		mockGetUserByGoogleSubService.mockResolvedValueOnce({
 			id: 2,
 			role: ROLES.USER,
 		} as never);
@@ -132,7 +132,7 @@ describe("reviewController", () => {
 			body: {},
 			query: {},
 		} as never);
-		mockGetUserByFirebaseUidService.mockResolvedValueOnce({
+		mockGetUserByGoogleSubService.mockResolvedValueOnce({
 			id: 8,
 			role: ROLES.ADMIN,
 		} as never);

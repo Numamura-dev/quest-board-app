@@ -22,14 +22,6 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/quests",
 }));
 
-vi.mock("firebase/auth", () => ({
-  signOut: vi.fn(),
-}));
-
-vi.mock("@/services/firebase", () => ({
-  auth: {},
-}));
-
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({
     user: null,

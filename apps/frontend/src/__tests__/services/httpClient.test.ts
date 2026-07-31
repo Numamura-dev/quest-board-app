@@ -1,13 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { httpRequest, authenticatedHttpRequest } from "@/services/httpClient";
 
-// firebase モック（authenticatedHttpRequest 用）
-vi.mock("@/services/firebase", () => ({
-	auth: {
-		currentUser: null,
-	},
-}));
-
 // config モック
 vi.mock("@/constants/config", () => ({
 	API_CONFIG: { BASE_URL: "http://localhost:3001/api" },

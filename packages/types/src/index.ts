@@ -73,7 +73,7 @@ export interface User {
   name: string;
   email?: string;
   role?: UserRole;
-  firebase_uid?: string;
+  google_sub?: string;
 }
 
 export interface QuestParticipant {

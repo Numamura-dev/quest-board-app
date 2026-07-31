@@ -5,7 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { notFound, unauthorized } from "../utils/appError";
 
 /**
- * 認証済み Firebase ユーザーからアプリケーション内ユーザー ID を解決する。
+ * 認証済みユーザーからアプリケーション内ユーザー ID を解決する。
  * @param req - Express リクエスト
  * @returns アプリケーション内のユーザー ID
  */

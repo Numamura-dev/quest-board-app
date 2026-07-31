@@ -7,8 +7,8 @@
 - Node.js
 - pnpm
 - Docker / Docker Compose
-- Firebase プロジェクト
-- Firebase Authentication のメール/パスワードログイン
+- Google アカウント（個人または組織アカウント）
+- Google Cloud Console へのアクセス権
 
 ## 初回セットアップ
 
@@ -19,54 +19,78 @@ cp apps/backend/.env.local.example apps/backend/.env.local
 cp apps/e2e/.env.example apps/e2e/.env
 ```
 
-## Firebase 設定
+## Google Cloud Console で OAuth クライアント ID を取得する
 
-### フロントエンド
+認証に Google OAuth 2.0 を使用します。Firebase コンソールは不要です。Google Cloud Console で OAuth 2.0 クライアント ID を発行します。
 
-Firebase コンソールで、対象プロジェクトの「プロジェクトの設定」>「全般」>「マイアプリ」> Web アプリの「SDK の設定と構成」を開きます。
+> スクリーンショットは `apps/docs/public/screenshots/google-oauth-setup/` に保存してあります。
 
-`firebaseConfig` の値を `apps/frontend/.env.local` に入れます。
+### 1. プロジェクトを作成または選択する
 
-| firebaseConfig | `.env.local` |
-| --- | --- |
-| `apiKey` | `NEXT_PUBLIC_FIREBASE_API_KEY` |
-| `authDomain` | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` |
-| `projectId` | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` |
-| `storageBucket` | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` |
-| `messagingSenderId` | `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` |
-| `appId` | `NEXT_PUBLIC_FIREBASE_APP_ID` |
+1. [Google Cloud Console](https://console.cloud.google.com) にアクセスする
+2. 画面上部のプロジェクト選択ドロップダウンから「新しいプロジェクト」を選択する
+3. プロジェクト名を入力して「作成」をクリックする（既存プロジェクトを使う場合は選択するだけで OK）
 
-`NEXT_PUBLIC_API_BASE_URL` は通常 `http://localhost:3001` のままで構いません。
+### 2. OAuth 同意画面を設定する
 
-### バックエンド
+1. 左メニューから「APIとサービス」→「OAuth 同意画面」を開く
+2. User Type を **外部** または **内部**（組織アカウントの場合）で選択して「作成」をクリックする
+3. 必須項目を入力する
+   - アプリ名（例: `Quest Board`）
+   - ユーザーサポートメール（自分のメールアドレス）
+   - デベロッパーの連絡先情報（自分のメールアドレス）
+4. 「保存して次へ」をクリックする（スコープ・テストユーザーの追加は不要）
+5. 最後の「概要」画面で確認して完了
 
-Firebase コンソールで「プロジェクトの設定」>「サービス アカウント」>「新しい秘密鍵の生成」から JSON を取得します。
+### 3. OAuth 2.0 クライアント ID を作成する
 
-JSON の値を `apps/backend/.env.local` に入れます。
+1. 左メニューから「APIとサービス」→「認証情報」を開く
+2. 「認証情報を作成」→「OAuth 2.0 クライアント ID」をクリックする
+3. アプリケーションの種類で **ウェブアプリケーション** を選択する
+4. 名前を入力する（例: `Quest Board Web`）
+5. 「承認済みの JavaScript 生成元」に以下を追加する
+   ```
+   http://localhost:3000
+   ```
+6. 「承認済みのリダイレクト URI」に以下を追加する
+   ```
+   http://localhost:3000
+   ```
+7. 「作成」をクリックする
+8. 表示された **クライアント ID**（`xxx.apps.googleusercontent.com` の形式）をコピーする
 
-| JSON | `.env.local` |
-| --- | --- |
-| `project_id` | `FIREBASE_PROJECT_ID` |
-| `client_email` | `FIREBASE_CLIENT_EMAIL` |
-| `private_key` | `FIREBASE_PRIVATE_KEY` |
+::: warning クライアント シークレットは不要
+このアプリは Google Identity Services（フロントエンド向け OAuth）を使用するため、クライアント シークレットは使いません。クライアント ID だけコピーしてください。
+:::
 
-`FIREBASE_PRIVATE_KEY` はダブルクォートで囲み、改行は `\n` のまま保持します。
+## 環境変数を設定する
+
+### フロントエンド（`apps/frontend/.env.local`）
 
 ```ini
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
 ```
+
+### バックエンド（`apps/backend/.env.local`）
+
+```ini
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+DATABASE_URL=mysql://root:password@localhost:3306/quest_board
+SHADOW_DATABASE_URL=mysql://root:password@localhost:3306/quest_board_shadow
+```
+
+`DATABASE_URL` と `SHADOW_DATABASE_URL` の値は `docker-compose.yml` のデフォルト設定に合わせます。
 
 ## DB セットアップ
 
 ```bash
-docker compose up -d
-docker compose ps
-pnpm db:generate
-pnpm db:push
-pnpm --filter backend seed
+docker compose up -d        # MySQL 起動
+docker compose ps           # 起動確認（State が running になるまで待つ）
+pnpm db:generate            # Prisma クライアント生成
+pnpm db:push                # スキーマを DB へ反映
+pnpm --filter backend seed  # シードデータ投入
 ```
-
-`apps/backend/.env.local` の `DATABASE_URL` は `docker-compose.yml` の MySQL 設定と合わせます。
 
 ## 起動
 
@@ -93,6 +117,14 @@ pnpm dev:docs
 | Swagger UI | `http://localhost:3001/api/docs` |
 | Docs | `http://localhost:5173` |
 
+## ログイン確認
+
+1. `http://localhost:3000/login` にアクセスする
+2. 「Google でログイン」ボタンが表示されることを確認する
+3. Google アカウントでログインする
+4. 初回ログイン時に MySQL の `users` テーブルへレコードが自動作成される
+5. ログアウト → 再ログインで同じレコードが使われること（upsert）を確認する
+
 ## 操作マニュアルのスクリーンショット更新
 
 通常は次を実行します。
@@ -106,12 +138,10 @@ pnpm docs:screenshots
 - frontend は `http://localhost:3000`
 - backend は `http://localhost:3001`
 - MySQL と seed 済み DB が利用可能
-- Firebase のテストユーザーでログイン可能
+- Google アカウントでログイン可能
 - `apps/e2e/.env` が作成済み
 
 生成先は `apps/docs/public/manual/*.png` です。
-
-Firebase API key の referrer 制限がある場合、ブラウザのアクセス先は `127.0.0.1` ではなく `localhost` を使ってください。
 
 ## 検証
 

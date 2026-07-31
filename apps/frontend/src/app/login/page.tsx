@@ -1,36 +1,15 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
-import { authenticatedApiClient } from "@/services/httpClient";
-import type { CredentialResponse } from "@react-oauth/google";
-import { GoogleLogin } from "@react-oauth/google";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+
+// @react-oauth/google は Next.js 15 RSC webpack と非互換のため SSR を無効化する
+const GoogleLoginForm = dynamic(() => import("./_components/GoogleLoginForm"), {
+	ssr: false,
+});
 
 export default function LoginPage() {
 	const router = useRouter();
-	const { login } = useAuth();
-
-	const handleSuccess = async (response: CredentialResponse) => {
-		if (!response.credential) return;
-
-		login(response.credential);
-
-		try {
-			await authenticatedApiClient.post("/users", {});
-		} catch (error) {
-			console.error("ユーザー同期エラー:", error);
-		}
-
-		router.push("/");
-	};
-
-	const handleError = () => {
-		alert("Google ログインに失敗しました。再度お試しください。");
-	};
-
-	const handleBack = () => {
-		router.push("/");
-	};
 
 	return (
 		<main
@@ -43,13 +22,13 @@ export default function LoginPage() {
 				</h1>
 
 				<div className="flex justify-center mb-6">
-					<GoogleLogin onSuccess={handleSuccess} onError={handleError} />
+					<GoogleLoginForm />
 				</div>
 
 				<button
 					type="button"
 					className="w-full bg-gray-500 text-white py-3 rounded hover:bg-gray-600 transition duration-300"
-					onClick={handleBack}
+					onClick={() => router.push("/")}
 				>
 					戻る
 				</button>

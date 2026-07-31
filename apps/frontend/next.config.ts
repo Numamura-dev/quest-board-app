@@ -20,17 +20,17 @@ const isDev = process.env.NODE_ENV !== "production";
 // 'unsafe-inline' は Next.js が注入するインラインスクリプト対応のため残している暫定措置。
 // 本番での完全排除は Middleware による nonce 付与が必要（issue #324 で追跡）。
 const scriptSrc = isDev
-	? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com"
-	: "script-src 'self' 'unsafe-inline' https://apis.google.com";
+	? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://accounts.google.com"
+	: "script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com";
 
 const ContentSecurityPolicy = [
 	"default-src 'self'",
 	scriptSrc,
-	"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+	"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
 	"font-src 'self' https://fonts.gstatic.com",
-	`connect-src 'self' ${apiOrigin} https://*.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com`,
-	"img-src 'self' data: blob:",
-	"frame-src 'none'",
+	`connect-src 'self' ${apiOrigin} https://*.googleapis.com https://accounts.google.com`,
+	"img-src 'self' data: blob: https://*.googleusercontent.com",
+	"frame-src https://accounts.google.com",
 	"object-src 'none'",
 	"base-uri 'self'",
 	"form-action 'self'",
